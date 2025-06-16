@@ -473,15 +473,13 @@ save_plot(filename = paste0(repo.loc,"/Figures/Simulation_eco_K.png"),sim.eco.K.
 
 # Now we have our carrying capacity for each stock and we can get to business and running a model.
 # Initialize some things, or maybe no things
-res.ts <- NULL
-ts.unpack <- NULL
+
 # Get the year range, going from the 'last' year to n.yrs.proj in the future, note this will go 1 year less than your intuition because
 # we want n.yrs of data, i.e., 20 years is 2000 to 2019, not 2020... )
 #browser()
 years <- (last.year+1):(last.year+n.yrs.proj)
 # Take the biomass data for the north sea and subset it to the years we have data
 bm.mod.yrs <- bm.tst |> collapse::fsubset(Year %in% first.year:last.year)
-for(s in Stocks)
 bm.start.year <- bm.mod.yrs |> collapse::fsubset(Year == last.year) |> 
                          collapse::fgroup_by(Stock,trophic,troph.cat,Species) |> 
                          collapse::fsummarise(bm.tot = sum(bm,na.rm=T))
@@ -499,224 +497,138 @@ av.wgt <- data.frame(Stock = av.wgt$Stock,troph.cat = as.numeric(av.wgt$troph.ca
 # For some debugging, if still here you can delete I'm sure
 #count = 0
 
+# FIX, this is a temporary hack!
+sim.tl.3.to.4 <- 0.6
+sim.tl.4.to.5 <- 0.2
+fake.tl.K <- 1e6
+
 # So everything will need to get wrapped up in a simulation loop
+res.ts <- NULL
+Ks <- NULL
+ts.unpack <- NULL
+# define the trophic levels we have.
+
 for(j in 1:n.sims)
 {
+  if(j == 1) count <- 0 
   st.time <- Sys.time()
   
   for(t in 1:n.yrs.proj)
   {
-    # Get some starting points. These are for the current year
-    base.eco.K.tmp <- sim.eco.K |> collapse::fsubset(sim == j & Years ==t)
-    # Get the trophic level 3 only since we are going bottom up
-    base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat==3)
-    base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat==3)
-    # Now get the stock biomass from last year.
-    if(t ==1)
+    # Now we need to run this through each trophic level, for bottom up we go 3, then 4, then 5....
+    for(tl in troph.levels)
     {
-      stock.bm.last <- init.stock.bm
-      stock.bm.last <- stock.bm.last[order(stock.bm.last$troph.cat),]
-      eco.bm.last <- init.eco.bm
-      tl.bm.last <- init.tl.bm[init.tl.bm$troph.cat==3,]
-    }
-    # Then we'll need to get these from the model simulations.
-    if(t > 1)
-    {
-      # Use the handy av.wgt data.frame I made above
-      bm.stocks <- data.frame(bm = NA,meta.dat)
-      for(s in stock.eco) bm.stocks$bm[bm.stocks$Stock == s] <- res.ts[[s]]$bm[res.ts[[s]]$Years == t-1]
-      bm.stocks$bm <- bm.stocks$bm
-      stock.bm.last <- bm.stocks
-      eco.bm.last <- sum(bm.stocks$bm)
-      tl.bm.last <- bm.stocks |> collapse::fsubset(troph.cat ==3) |> collapse::fsummarise(bm.tl = sum(bm))
-    }  
-   # Now we need to figure out what K space is available for each stock within the trophic level.
-   # I'm going to base the K space for t+1 on the biomass available in the higher trophic level
-   # in year t along with the 'transfer efficiency', which is currently the proportion of the total 
-    # ecosystem biomass that the trophic level gets.
-    base.tl.K.tmp$prop.K.space <- tl.bm.last$bm.tl /sim.tl.3.prop.bm 
-    sim.tl.5.4.prop.bm
-    # We can then adjust the stock K's by the available K space in each stock
-    
-    base.stock.K.tmp$K.space <- NA
-    base.stock.K.tmp$K.space[base.stock.K.tmp$troph.cat ==3] <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==3] * 
-                                                        (base.tl.K.tmp$prop.K.space[base.tl.K.tmp$troph.cat ==3]-1)
-    base.stock.K.tmp$K.space[base.stock.K.tmp$troph.cat ==4] <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==4] * 
-      (base.tl.K.tmp$prop.K.space[base.tl.K.tmp$troph.cat ==4]-1)
-    base.stock.K.tmp$K.space[base.stock.K.tmp$troph.cat ==5] <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==5] * 
-      (base.tl.K.tmp$prop.K.space[base.tl.K.tmp$troph.cat ==5]-1)
-    
-    base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
-    
-    # So now I have Carrying Capacities that take up (or lose) any available K space.
-    # Now we can convert these to numbers using the historic 'average weight' of the stocks, to avoid complication
-    # I'm just using the average of the average weight for each stock...
-    base.stock.K.tmp <- left_join(base.stock.K.tmp,av.wgt,by=c("Stock","troph.cat"))
-    # And now we can get a K in numbers....
-    base.stock.K.tmp$adj.K.num <- base.stock.K.tmp$adj.K/base.stock.K.tmp$mn.wgt
-    # Since I have Years and sim recorded, I should just be able to recursivly rbind this...
-    if(t ==1 & j == 1) 
-    {
-      base.stock.K <- base.stock.K.tmp
-      base.tl.K <- base.tl.K.tmp
-      base.eco.K <- base.eco.K.tmp
-    } else {
-            base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
-            base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
-            base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
-            } # end the else...
-
-  for(s in stock.eco)
-  {
-      # Reset samples
-      #browser()
-      stock.lambdas <- lambdas[[s]] 
-      tmp.bm.last <- stock.bm.last |> collapse::fsubset(Stock == s)
-      tmp.stock.K <- base.stock.K.tmp |> collapse::fsubset(Stock == s)
-      bm.ts.stock <- bm.final[bm.final$Stock == s & bm.final$Year %in% first.year:last.year,]  
-      #a=s
-      #browser()
-      # Now get the final year bm
+      if(tl ==3) tl.K <- fake.tl.K # bm.sim.3[t]
+      # This gets the Ks
+      if(tl >3) tl.K <- Ks[[j]]$bm[Ks[[j]]$tl == tl & Ks[[j]]$Years == t & Ks[[j]]$sim == j] # sim.tl.4.5.te 
+      
+      bm.stash <- NULL
+      tl.stocks <- unique(sim.K.stocks$Stock[sim.K.stocks$troph.cat ==tl])
+      for(s in tl.stocks)
+      {
+        count <- count + 1
+        stock.lambdas <- lambdas[[s]] 
+        bm.ts.stock <- bm.final[bm.final$Stock == s & bm.final$Year %in% first.year:last.year,]  
+      
       if(t == 1) 
       { 
-        
         bm.start <- bm.ts.stock$bm.stock[bm.ts.stock$Year == last.year]
         res.ts[[s]] <- data.frame(bm = bm.start,removals = NA,ex.rate = NA,
-                                  Stock = s,sim= j,lambda = NA,Years=t-1,
-                                  troph.cat = as.numeric(unique(bm.tot$troph.cat[bm.tot$Stock ==s])),
+                                  Stock = s,sim= j,lambda = NA,Years=t-1,troph.cat = tl,
                                   K.bm = NA)
         
       } else{ bm.start <- res.ts[[s]]$bm[res.ts[[s]]$Years == t-1]}
       
-      # Sort out which of the years are low or high bm
-      # I'm using 0.5 as the cut off, other options are valid (0.4 is my fav...)
-      low.vs.high <- 0.5
-      low.vs.high.bm <- low.vs.high * max(bm.ts.stock$bm.stock)
-      # Have to drop the final year because we don't have a lambda estimate for the final year
-      low.bm.years <- which(bm.ts.stock$bm.stock[-nrow(bm.ts.stock)] < low.vs.high.bm)
-      if(length(low.bm.years) == 0) low.years <- F else low.years <- T
-      high.bm.years <- which(bm.ts.stock$bm.stock[-nrow(bm.ts.stock)] >= low.vs.high.bm)
-      # ANd get what our carrying capacity is at this moment
-      cur.K <- tmp.stock.K$adj.K
       
-      # So first, get a sample 
-      method <- "not_sample"
-      if(method == 'sample')
+      # Now get the stock biomass from last year.
+      if(t ==1)  tl.bm.last <- init.tl.bm[init.tl.bm$troph.cat==tl,]
+
+      # Then we'll need to get these from the model simulations.
+      if(t > 1)
       {
-        # Pick one of these to sample if that's how we want to roll, if we have low biomass years (as
-        # defined by our cut off low.vs.high)
-        if(low.years == T)
-        {
-        if(bm.start < low.vs.high.bm) samp <- sample(low.bm.years,1)
-        if(bm.start >= low.vs.high.bm) samp <- sample(high.bm.years,1)
-        } # end If we have low years
-        if(low.years == F) samp <- sample(high.bm.years,1)
-        # The simple way to do it is just to sample from the natural mortality distribution
-        # Now using the right lambda, go look at trends from the stocks that are declining to see what's up there.
-        lam.samp <- stock.lambdas$lam.no.fish[samp] # Get the sample years.  
-      } # end the sample method.
-      
-      # Or do it the fun way...
-      if(method != "sample")
+        # Use the handy av.wgt data.frame I made above
+        bm.stocks <- data.frame(bm = NA,meta.dat)
+        for(s in stock.eco) bm.stocks$bm[bm.stocks$Stock == s] <- res.ts[[s]]$bm[res.ts[[s]]$Years == t-1]
+        bm.stocks$bm <- bm.stocks$bm
+        stock.bm.last <- bm.stocks
+        eco.bm.last <- sum(bm.stocks$bm)
+        tl.bm.last <- bm.stocks |> collapse::fsubset(troph.cat ==tl) |> collapse::fsummarise(bm.tl = sum(bm))
+      }  
+      # Now we need to figure out what K space is available for each stock within the trophic level.
+      # I'm going to base the K space for t+1 on the biomass available in the higher trophic level
+      # in year t along with the 'transfer efficiency', which is currently the proportion of the total 
+      # ecosystem biomass that the trophic level gets.
+      # We can then adjust the stock K's by the available K space in each stock
+      # So this is the K space available in a given trophic level in a year
+      if(tl == 3) 
       {
-      
-        # The fun way to do it is to do something multivariate! Note these are instantaneous now!!
-        if(bm.start < low.vs.high.bm) 
-        {
-          if(length(low.bm.years) >0)
-          {
-          lam.mn <- mean(stock.lambdas$lam.no.fish[low.bm.years],na.rm=T)
-          lam.sd <- sd(log(stock.lambdas$lam.no.fish[low.bm.years]),na.rm=T)
-          if(length(low.bm.years) == 1) lam.sd <- 0.2 # In case there is just one low biomass year
-          }
-          if(length(low.bm.years) ==0)
-          {
-            lam.mn <- mean(stock.lambdas$lam.no.fish,na.rm=T)
-            lam.sd <- sd(log(stock.lambdas$lam.no.fish),na.rm=T)
-          }
-          lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-          #if(is.na(lam.samp)) browser()
-        } # end if(bm.start < low.vs.high.bm) 
+        base.eco.K.tmp <- sim.eco.K |> collapse::fsubset(sim == j & Years ==t)
+        # Get the trophic level 3 only since we are going bottom up
+        base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat==tl)
+        base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat==tl)
+        base.stock.K.tmp$prop.bm.stock <- rep(1/length(tl.stocks),length(tl.stocks))
+        base.stock.K.tmp$tl.K <- tl.K 
+        base.tl.K.tmp$prop.K.space <- base.tl.K.tmp$bm.tl/tl.bm.last$bm.tl
+      # We can then adjust the stock K's by the available K space in each stock
+        base.stock.K.tmp$K.space <- NA
+        base.stock.K.tmp$K.space <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==tl] * 
+          (base.tl.K.tmp$prop.K.space-1)
+        base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
+      } # end if tl ==3
+ 
+      if(tl > 3) 
+      {
+        base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat==tl)
+        base.stock.K.tmp$prop.bm.stock <- rep(1/length(tl.stocks),length(tl.stocks))
+        base.stock.K.tmp$tl.K <- tl.K 
+        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$prop.bm.stock
         
-        if(bm.start >= low.vs.high.bm & bm.start < cur.K) 
-        {
-          lam.mn <- mean(stock.lambdas$lam.no.fish[high.bm.years],na.rm=T)
-          lam.sd <- sd(log(stock.lambdas$lam.no.fish[high.bm.years]),na.rm=T)
-          lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-          
-        } # end if(bm.start < low.vs.high.bm) 
+        base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat==tl)
         
-      } # end if(method != "sample")
-      #if(is.na(lam.samp)) browser()
-      while(is.na(lam.samp)) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-      # Final one, if we are above the K, we are just doing the high biomass scenario for now.
-      # Solution, sample from the lambdas at high biomass, but only take lambdas that are <= 1
-      if(bm.start >= cur.K) 
-      {
-        lam.mn <- mean(stock.lambdas$lam.no.fish[high.bm.years],na.rm=T)
-        lam.sd <- sd(log(stock.lambdas$lam.no.fish[high.bm.years]),na.rm=T)
-        lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-        #if(is.na(lam.samp)) browser()
-        while(lam.samp >1) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
+        base.tl.K.tmp$prop.K.space <- tl.K/tl.bm.last$bm.tl
+        # We can then adjust the stock K's by the available K space in each stock
+        base.stock.K.tmp$K.space <- NA
+        base.stock.K.tmp$K.space <- base.stock.K.tmp$bm.stock * 
+          (base.tl.K.tmp$prop.K.space-1)
+        base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
       }
-      #while(is.na(lam.samp)) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
+      # So now I have Carrying Capacities that take up (or lose) any available K space.
+      # Now we can convert these to numbers using the historic 'average weight' of the stocks, to avoid complication
+      # I'm just using the average of the average weight for each stock...
+      base.stock.K.tmp <- left_join(base.stock.K.tmp,av.wgt,by=c("Stock","troph.cat"))
+      # And now we can get a K in numbers....
+      base.stock.K.tmp$adj.K.num <- base.stock.K.tmp$adj.K/base.stock.K.tmp$mn.wgt
+      # Since I have Years and sim recorded, I should just be able to recursivly rbind this...
       
-# Simple way to include removals
-
-if(is.null(catch$er.mn)) {ex.rate = 0; ex.sd = 0}
-if(!is.null(catch$er.mn))
-{
-  er.mn <- catch$er.mn
-  if(!is.null(catch$er.sd)) er.sd <- catch$er.sd
-  if(is.null(catch$er.sd)) er.sd <- data.frame(er.sd=0,Stock =s)
-  ex.rate = er.mn$ex.mn[er.mn$Stock == s]
-  ex.sd = er.sd$ex.sd[er.sd$Stock == s]
-} # end if(!is.null(catch$er.mn))
-if(is.null(catch$catch)) 
-{
-  #print(ex.rate)
-  # Convert proportion to F
-  ex.rate <- -log(1-ex.rate)
-  er <- rlnorm(1,log(ex.rate),ex.sd)
-  # Go from F back to proportion
-  er <- 1-exp(-er)
-  removals <- bm.start*er
-} # end if(is.null(catch$catch)) 
+      # This should do the trick for creating this for the very first stop and then updating thereafter.
+      if(t ==1 & j ==1 & count ==1) 
+      {
+        base.stock.K <- base.stock.K.tmp
+        base.tl.K <- base.tl.K.tmp
+        base.eco.K <- base.eco.K.tmp
+      } else {
+        base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
+        base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
+        base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
+        
+      } # end the else...
       
-# If you have a catch estimate for the stock
-  if(!is.null(catch$catch))
-  {
-    limit.er <- 0.4
-    removals.tmp <- catch$catch$catch[catch$catch$Stock ==s]
-    er <- removals.tmp/(bm.start+removals.tmp)
-    if(er > limit.er) 
-    {
-      removals.tmp <- limit.er*bm.start
-      er <- limit.er
-    }
-    removals <- removals.tmp
-  } # end if(!is.null(catch$catch))
-
-
-#print(er)
-
-#lam.samp <- rlnorm(1,log(1),0.1)
-#tst.res <- (lam.samp)*bm.start - removals
-# We want to grow after removals because otherwise we can get negative values given exploitation was
-# calculated using the initial biomass
-tst.res <- lam.samp*(bm.start - removals)
-     
-# Because I'm only doing this one year at a time, there's something in here I need to mess around with to get the output tidy...
-
-res.ts[[s]] <- rbind(res.ts[[s]] ,data.frame(bm = tst.res,removals =removals,ex.rate = er,
-                                             Stock = s,sim= j,lambda = lam.samp,Years=t,
-                                             troph.cat = as.numeric(unique(bm.tot$troph.cat[bm.tot$Stock ==s])),
-                                             K.bm = tmp.stock.K$adj.K))
-#if(tst$r$r[1] > 14) stop("WTF")
-#abund.new[[s]] <- data.frame(abund = tst$Pop$abund[2])
-#res.r[[s]] <- data.frame(tst$r[1,-2],stock=s,sim=j)
-
-  } # end stock loop
+      res <- pop.dam()
+      
+      res.ts[[s]] <- rbind(res.ts[[s]],data.frame(bm = res$tst.res,removals =res$removals,ex.rate = res$ex.rate,
+                                 Stock = s,sim= j,lambda = res$lambda,Years=t,
+                                 troph.cat = tl,K.bm = res$K))
+      bm.stash[[s]] <- res$tst.res
+      } # end stock loop by trophic level
+      # How this is set up we have the biomass after fishing impacting the K in that year
+      # We might want to have this impact the following years K.
+      # K for the next trophic level
+      if(tl == 3) next.tl.K <- sum(do.call('rbind',bm.stash))*sim.tl.3.to.4[[j]][t]
+      if(tl == 4) next.tl.K <- sum(do.call('rbind',bm.stash))*sim.tl.4.to.5[[j]][t]
+      if(tl < 5) Ks[[j]] <- rbind(Ks[[j]],data.frame(bm = next.tl.K,tl = tl+1,Years=t,sim=j))
+    }# End trophic level loop.
+    
+    
   #res.tst[[t]] <- do.call("rbind",res.ts)
   } # end the t looping through each year.
   
