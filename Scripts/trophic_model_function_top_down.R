@@ -280,19 +280,30 @@ tl.3.prop.bm.lag.2 <- tl.3.prop.pacf$acf[2]
 tl.4.5.prop.bm <- bm.best$bm.tl[bm.best$troph.cat == 5][1:n.years]/(bm.best$bm.tl[bm.best$troph.cat == 4][1:n.years]+bm.best$bm.tl[bm.best$troph.cat == 5][1:n.years])
 # This is the correlation between 4 and 5
 tl.4.5.prop.4.5.bm <- pacf(tl.4.5.prop.bm,plot = F)
+#NEW: proportion of 5 in the ecosystem
+tl.5.prop.bm.ts <- bm.best$prop.bm.tl[bm.best$troph.cat==5][1:n.years]
+tl.5.prop.pacf <- pacf(tl.5.prop.bm.ts, plot=F)
+tl.5.prop.bm.lag.1 <- tl.5.prop.pacf$acf[1]
+tl.5.prop.bm.lag.2 <-tl.5.prop.pacf$acf[2]
+#NEW: transfer efficiencies
+  #didn't make a time series variable, because the transfer efficiencies are already isolated
+tl.3.to.4.pacf <- pacf(tl.3.to.4, plot=F)
+tl.3.to.4.lag.1 <- tl.3.to.4.pacf$acf[1]
+tl.3.to.4.lag.2 <- tl.3.to.4.pacf$acf[2]
+tl.4.to.5.pacf <- pacf(tl.4.to.5, plot=F)
+tl.4.to.5.lag.1 <- tl.4.to.5.pacf$acf[1]
+tl.4.to.5.lag.2 <- tl.4.to.5.pacf$acf[2]
 
 
 troph.levels <- sort(unique(bm.best$troph.cat))
 
-# 
-sim.K.stock <- NULL
-sim.Ks <- NULL
-sim.eco.bm <- NULL
-bm.trophic.Ks <- NULL
-
 # Get necessary data on logit scale
 tl.3.logit <- logit(tl.3.prop.bm.ts)
 tl.4.5.logit <- logit(tl.4.5.prop.bm)
+#NEW
+tl.5.logit <- logit(tl.5.prop.bm.ts)
+tl.3.to.4.logit <- logit(tl.3.to.4)
+tl.4.to.5.logit <- logit(tl.4.to.5)
 
 # Starting values for the ecosystem and the proportions, logit needed for arima models with the proportions
 start.eco.sim <- eco.tot.bm.best$bm.eco[nrow(eco.tot.bm.best)]
@@ -300,30 +311,71 @@ start.tl.3.prop.bm <- tl.3.prop.bm.ts[length(tl.3.prop.bm.ts)]
 start.tl.3.logit <- tl.3.logit[length(tl.3.logit)]
 start.tl.4.5.prop.bm <- tl.4.5.prop.bm[length(tl.4.5.prop.bm)]
 start.tl.4.5.logit <- tl.4.5.logit[length(tl.4.5.logit)]
+#NEW
+start.tl.5.prop.bm <- tl.5.prop.bm.ts[length(tl.5.prop.bm.ts)]
+start.tl.5.logit <- tl.5.logit[length(tl.5.logit)]
+start.tl.3.to.4 <- tl.3.to.4[length(tl.3.to.4)]
+start.tl.3.to.4.logit <- tl.3.to.4.logit[length(tl.3.to.4.logit)]
+start.tl.4.to.5 <- tl.4.to.5[length(tl.4.to.5)]
+start.tl.4.to.5.logit <- tl.4.to.5.logit[length(tl.4.to.5.logit)]
 
 # Mean values for the trophic levels
 mn.tl.3.prop.bm <- mean(tl.3.prop.bm.ts)
 mn.tl.3.logit <- mean(tl.3.logit)
 mn.tl.4.5.prop.bm <- mean(tl.4.5.prop.bm)
 mn.tl.4.5.logit <- mean(tl.4.5.logit)
+#NEW
+mn.tl.5.prop.bm <- mean(tl.5.prop.bm.ts)
+mn.tl.5.logit <- mean(tl.5.logit)
+mn.tl.3.to.4 <- mean(tl.3.to.4)
+mn.tl.3.to.4.logit <- mean(tl.3.to.4.logit)
+m.tl.4.to.5 <- mean(tl.4.to.5)
+mn.tl.4.to.5.logit <- mean(tl.4.to.5.logit)
+
 # We could instead use the most recent year as the mean...
-mn.tl.3.prop.bm <- start.tl.3.prop.bm
-mn.tl.3.logit <- start.tl.3.logit
-mn.tl.4.5.prop.bm <- start.tl.4.5.prop.bm
-mn.tl.4.5.logit <- start.tl.4.5.logit
+#mn.tl.3.prop.bm <- start.tl.3.prop.bm
+#mn.tl.3.logit <- start.tl.3.logit
+#mn.tl.4.5.prop.bm <- start.tl.4.5.prop.bm
+#mn.tl.4.5.logit <- start.tl.4.5.logit
+#NEW
+#mn.tl.5.prop.bm <- start.tl.5.prop.bm
+#mn.tl.5.logit <- start.tl.5.logit
+#mn.tl.3.to.4 <- start.tl.3.to.4
+#mn.tl.3.to.4.logit <- start.tl.3.to.4.logit
+#mn.tl.4.to.5 <- start.tl.4.to.5
+#mn.tl.4.to.5.logit <- start.tl.4.to.5.logit
 
 # Difference between starting value an mean (if we use the most recent year as the 'mean', then this is 0)
 start.eco.diff = start.eco.sim- mn.eco.bm
 start.tl.3.diff <- start.tl.3.logit - mn.tl.3.logit
 start.tl.4.5.diff <- start.tl.4.5.logit - mn.tl.4.5.logit
+#NEW
+start.tl.5.diff <- start.tl.5.logit - mn.tl.5.logit
+start.tl.3.to.4.diff <- start.tl.3.to.4.logit - mn.tl.3.to.4.logit
+start.tl.4.to.5.diff <- start.tl.4.to.5.logit - mn.tl.4.to.5.logit
 
 # the standard deviations
 sd.tl.3.logit <- sd(tl.3.logit)
 sd.tl.4.5.logit <- sd(tl.4.5.logit)
+#NEW
+sd.tl.5.logit <- sd(tl.5.logit)
+sd.tl.3.to.4.logit <- sd(tl.3.to.4.logit)
+sd.tl.4.to.5.logit <- sd(tl.4.to.5.logit)
+
 # Lag for the Arima model
 tl.4.5.prop.bm.lag.1 <- tl.4.5.prop.4.5.bm$acf[1]
 # convert to logit scale for the arima models
 
+sim.K.stock <- NULL
+sim.Ks <- NULL
+sim.eco.bm <- NULL
+bm.trophic.Ks <- NULL
+sim.tl.3.to.4 <- NULL
+sim.tl.4.to.5 <- NULL
+sim.tl.5.prop.bm <- NULL
+bm.sim.3 <- NULL
+bm.sim.4 <- NULL
+bm.sim.5 <- NULL
 
 for(i in 1:n.sims) 
 {
@@ -338,27 +390,57 @@ for(i in 1:n.sims)
   # FIX: I am using the AR2, but I know the start innovation is slightly incorrect, but it make almost no difference for the NS case so I'll stick with it
   # so probably should figure out how to specify that right as it just works by luck here I think, if the difference was larger
   # or correlations different it wouldn't do so well (e.g., it isn't nice for the stock level ones.)
-  sim.tl.3.prop.bm <-inv.logit(mn.tl.3.logit + 
-                                 arima.sim(model =list(ar = c(tl.3.prop.bm.lag.1,tl.3.prop.bm.lag.2)),n = n.yrs.proj,
-                                           n.start =2, start.innov = c(start.tl.3.diff/tl.3.prop.bm.lag.1,start.tl.3.diff/tl.3.prop.bm.lag.1), 
-                                           innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.3.logit))))
   
-  bm.sim.3 <- sim.tl.3.prop.bm * sim.eco.bm[[i]]$bm
+  
+  #sim.tl.3.prop.bm <-inv.logit(mn.tl.3.logit + 
+                                # arima.sim(model =list(ar = c(tl.3.prop.bm.lag.1,tl.3.prop.bm.lag.2)),n = n.yrs.proj,
+                                          # n.start =2, start.innov = c(start.tl.3.diff/tl.3.prop.bm.lag.1,start.tl.3.diff/tl.3.prop.bm.lag.1), 
+                                          # innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.3.logit))))
+  
+  #NEW: ARIMA sim on the proportion of TL 5 in the ecosystem
+  sim.tl.5.prop.bm[[i]] <-inv.logit(mn.tl.5.logit + 
+                                 arima.sim(model =list(ar = c(tl.5.prop.bm.lag.1,tl.5.prop.bm.lag.2)),n = n.yrs.proj,
+                                           n.start =2, start.innov = c(start.tl.5.diff/tl.5.prop.bm.lag.1,start.tl.5.diff/tl.5.prop.bm.lag.1), 
+                                           innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.5.logit))))
+  
+  #NEW: ARIMA simulation on the transfer efficiencies between TLs
+  sim.tl.3.to.4[[i]] <- inv.logit(mn.tl.3.to.4.logit + 
+                              arima.sim(model =list(ar = c(tl.3.to.4.lag.1,tl.3.to.4.lag.2)),n = n.yrs.proj,
+                                        n.start =2, start.innov = c(start.tl.3.to.4.diff/tl.3.to.4.lag.1,start.tl.3.to.4.diff/tl.3.to.4.lag.1), 
+                                        innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.3.to.4.logit))))
+  
+  sim.tl.4.to.5[[i]] <- inv.logit(mn.tl.4.to.5.logit + 
+                               arima.sim(model =list(ar = c(tl.4.to.5.lag.1)),n = n.yrs.proj,
+                                         n.start =1, start.innov = c(start.tl.4.to.5.diff/tl.4.to.5.lag.1), 
+                                         innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.4.to.5.logit))))
+
+  
+  #NEW: calculating Ks starting from 5 and going to 3 based on transfer efficiencies
+  bm.sim.5[[i]] <- sim.tl.5.prop.bm[[i]] * sim.eco.bm[[i]]$bm
+  bm.sim.4[[i]] <- bm.sim.5[[i]]/sim.tl.4.to.5[[i]]
+  bm.sim.3[[i]] <- bm.sim.4[[i]]/sim.tl.3.to.4[[i]]
+  
+  #check
+  #check <- data.frame(sim.eco.bm$bm, bm.sim.3, bm.sim.4, bm.sim.5, bm.check=(bm.sim.3 + bm.sim.4 + bm.sim.5))
+
+  
+  #bm.sim.3 <- sim.tl.3.prop.bm * sim.eco.bm[[i]]$bm
   # So this is what is left for 3 and 4
-  bm.left.4.5<- sim.eco.bm[[i]]$bm - bm.sim.3
+  #bm.left.4.5<- sim.eco.bm[[i]]$bm - bm.sim.3
   # So then we use the historical split between 4 and 5 can see 5 gets about 1/3-1-5 of 3
    # so then simulate this split
-  sim.tl.5.4.prop.bm <- inv.logit(mn.tl.4.5.logit + 
-                                    arima.sim(model =list(ar = tl.4.5.prop.bm.lag.1),n = n.yrs.proj,
-                                              n.start =1, start.innov = c(start.tl.4.5.diff/tl.4.5.prop.bm.lag.1), 
-                                              innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.3.logit))))
+  #sim.tl.5.4.prop.bm <- inv.logit(mn.tl.4.5.logit + 
+                                    #arima.sim(model =list(ar = tl.4.5.prop.bm.lag.1),n = n.yrs.proj,
+                                             # n.start =1, start.innov = c(start.tl.4.5.diff/tl.4.5.prop.bm.lag.1), 
+                                            #  innov = c(0,rnorm(n.yrs.proj-1,0,sd.tl.3.logit))))
   # And now TL 5 gets this proportion of the 4 and 5 biomass
-  bm.sim.5 <- bm.left.4.5 * sim.tl.5.4.prop.bm
+  #bm.sim.5 <- bm.left.4.5 * sim.tl.5.4.prop.bm
   # And TL4 gets the rest, and so the ecosystem biomass is a portion of the whole biomass
-  bm.sim.4 <- sim.eco.bm[[i]]$bm - bm.sim.3-bm.sim.5
+  #bm.sim.4 <- sim.eco.bm[[i]]$bm - bm.sim.3-bm.sim.5
   
   bm.trophic.Ks[[i]] <- data.frame(Years = rep(1:n.yrs.proj,3), sim =i,
-                                   bm.tl = c(bm.sim.3,bm.sim.4,bm.sim.5),troph.cat = as.factor(sort(rep(c(3,4,5),n.yrs.proj))),
+                                   bm.tl = c(bm.sim.3[[i]],bm.sim.4[[i]],bm.sim.5[[i]]),
+                                   troph.cat = as.factor(sort(rep(c(3,4,5),n.yrs.proj))),
                                    bm.eco = rep(sim.eco.bm[[i]]$bm,3))
   bm.trophic.Ks[[i]]$prop.bm.tl <- bm.trophic.Ks[[i]]$bm.tl/bm.trophic.Ks[[i]]$bm.eco
   
@@ -368,7 +450,7 @@ for(i in 1:n.sims)
   # cross correlation for species with multiple stocks, but for now, let's just do the AR1/2 thing with this for the proportion of the trophic level 
   # biomass each stock gets.
   
-  for(tl in troph.levels)
+  for(tl in rev(troph.levels))
   {
     tl.stocks <- unique(bm.best$Stock[bm.best$troph.cat==tl])
     n.stock.tl <- length(tl.stocks)
@@ -402,7 +484,8 @@ for(i in 1:n.sims)
                                              n = n.yrs.proj,innov = c(0,rnorm(n.yrs.proj-1,0,sd.bm.logit))) + mn.bm.logit))
         sim.Ks[[s]] <- data.frame(Years = 1:n.yrs.proj, sim = i,
                                        Stock = s, troph.cat = tl,
-                                       bm.stock = tmp.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl])
+                                       bm.stock = tmp.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
+                                      prop.bm.stock = tmp.prop.bm)
       } # end the if(count == 1 ||  n.stock.tl != 2)
       # If there are only 2 stocks in a trophic level, then the second stock get the rest of the trophic levels biomass
       
@@ -410,7 +493,8 @@ for(i in 1:n.sims)
       {
         sim.Ks[[s]] <-  data.frame(Years = 1:n.yrs.proj, sim=i,
                                    Stock = s, troph.cat = as.numeric(tl),
-                                   bm.stock = (1-tmp.prop.bm)*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl])
+                                   bm.stock = (1-tmp.prop.bm)*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
+                                   prop.bm.stock = 1-tmp.prop.bm)
       } # end the case of just 2 stocks
     } # end the stocks loop
   } # end the trophic level loop
@@ -473,15 +557,14 @@ save_plot(filename = paste0(repo.loc,"/Figures/Simulation_eco_K.png"),sim.eco.K.
 
 # Now we have our carrying capacity for each stock and we can get to business and running a model.
 # Initialize some things, or maybe no things
-res.ts <- NULL
-ts.unpack <- NULL
+
 # Get the year range, going from the 'last' year to n.yrs.proj in the future, note this will go 1 year less than your intuition because
 # we want n.yrs of data, i.e., 20 years is 2000 to 2019, not 2020... )
 #browser()
 years <- (last.year+1):(last.year+n.yrs.proj)
 # Take the biomass data for the north sea and subset it to the years we have data
 bm.mod.yrs <- bm.tst |> collapse::fsubset(Year %in% first.year:last.year)
-for(s in Stocks)
+
 bm.start.year <- bm.mod.yrs |> collapse::fsubset(Year == last.year) |> 
                          collapse::fgroup_by(Stock,trophic,troph.cat,Species) |> 
                          collapse::fsummarise(bm.tot = sum(bm,na.rm=T))
@@ -500,228 +583,125 @@ av.wgt <- data.frame(Stock = av.wgt$Stock,troph.cat = as.numeric(av.wgt$troph.ca
 #count = 0
 
 # So everything will need to get wrapped up in a simulation loop
+res.ts <- NULL
+Ks <- NULL
+ts.unpack <- NULL
+results <- NULL
+tmp <- NULL
+
+
+
 for(j in 1:n.sims)
 {
   st.time <- Sys.time()
+  if (j == 1) count <- 0
   
   for(t in 1:n.yrs.proj)
   {
-    # Get some starting points. These are for the current year
-    base.eco.K.tmp <- sim.eco.K |> collapse::fsubset(sim == j & Years ==t)
-    base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t)
-    base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t)
-    # Now get the stock biomass from last year.
-    if(t ==1)
-    {
-      stock.bm.last <- init.stock.bm
-      stock.bm.last <- stock.bm.last[order(stock.bm.last$troph.cat),]
-      eco.bm.last <- init.eco.bm
-      tl.bm.last <- init.tl.bm
-    }
-    # Then we'll need to get these from the model simulations.
-    if(t > 1)
-    {
-      # Use the handy av.wgt data.frame I made above
-      bm.stocks <- data.frame(bm = NA,meta.dat)
-      for(s in stock.eco) bm.stocks$bm[bm.stocks$Stock == s] <- res.ts[[s]]$bm[res.ts[[s]]$Years == t-1]
-      bm.stocks$bm <- bm.stocks$bm
-      stock.bm.last <- bm.stocks
-      eco.bm.last <- sum(bm.stocks$bm)
-      tl.bm.last <- bm.stocks |> collapse::fgroup_by(troph.cat) |> collapse::fsummarise(bm.tl = sum(bm))
-    }  
-   # Now we need to figure out what K space is available for each stock within the trophic level.
-   # First is our Trophic level above the K we have for it.
-    # So this is the K space available in a given trophic level in a year
-    base.tl.K.tmp$prop.K.space <- base.tl.K.tmp$bm.tl/tl.bm.last$bm.tl
-    # We can then adjust the stock K's by the available K space in each stock
-    
-    base.stock.K.tmp$K.space <- NA
-    base.stock.K.tmp$K.space[base.stock.K.tmp$troph.cat ==3] <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==3] * 
-                                                        (base.tl.K.tmp$prop.K.space[base.tl.K.tmp$troph.cat ==3]-1)
-    base.stock.K.tmp$K.space[base.stock.K.tmp$troph.cat ==4] <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==4] * 
-      (base.tl.K.tmp$prop.K.space[base.tl.K.tmp$troph.cat ==4]-1)
-    base.stock.K.tmp$K.space[base.stock.K.tmp$troph.cat ==5] <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$troph.cat ==5] * 
-      (base.tl.K.tmp$prop.K.space[base.tl.K.tmp$troph.cat ==5]-1)
-    
-    base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
-    
-    # So now I have Carrying Capacities that take up (or lose) any available K space.
-    # Now we can convert these to numbers using the historic 'average weight' of the stocks, to avoid complication
-    # I'm just using the average of the average weight for each stock...
-    base.stock.K.tmp <- left_join(base.stock.K.tmp,av.wgt,by=c("Stock","troph.cat"))
-    # And now we can get a K in numbers....
-    base.stock.K.tmp$adj.K.num <- base.stock.K.tmp$adj.K/base.stock.K.tmp$mn.wgt
-    # Since I have Years and sim recorded, I should just be able to recursivly rbind this...
-    if(t ==1 & j == 1) 
-    {
-      base.stock.K <- base.stock.K.tmp
-      base.tl.K <- base.tl.K.tmp
-      base.eco.K <- base.eco.K.tmp
-    } else {
-            base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
-            base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
-            base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
-            } # end the else...
-
-  for(s in stock.eco)
-  {
-      # Reset samples
-      #browser()
-      stock.lambdas <- lambdas[[s]] 
-      tmp.bm.last <- stock.bm.last |> collapse::fsubset(Stock == s)
-      tmp.stock.K <- base.stock.K.tmp |> collapse::fsubset(Stock == s)
-      bm.ts.stock <- bm.final[bm.final$Stock == s & bm.final$Year %in% first.year:last.year,]  
-      #a=s
-      #browser()
-      # Now get the final year bm
-      if(t == 1) 
-      { 
-        
-        bm.start <- bm.ts.stock$bm.stock[bm.ts.stock$Year == last.year]
-        res.ts[[s]] <- data.frame(bm = bm.start,removals = NA,ex.rate = NA,
-                                  Stock = s,sim= j,lambda = NA,Years=t-1,
-                                  troph.cat = as.numeric(unique(bm.tot$troph.cat[bm.tot$Stock ==s])),
-                                  K.bm = NA)
-        
-      } else{ bm.start <- res.ts[[s]]$bm[res.ts[[s]]$Years == t-1]}
+    for (tl in rev(troph.levels)) {
+      if (tl == 5) tl.K <- bm.sim.5[[j]][t]
+      if (tl < 5) tl.K <- Ks[[j]]$bm[Ks[[j]]$tl==tl & Ks[[j]]$Years==t]
       
-      # Sort out which of the years are low or high bm
-      # I'm using 0.5 as the cut off, other options are valid (0.4 is my fav...)
-      low.vs.high <- 0.5
-      low.vs.high.bm <- low.vs.high * max(bm.ts.stock$bm.stock)
-      # Have to drop the final year because we don't have a lambda estimate for the final year
-      low.bm.years <- which(bm.ts.stock$bm.stock[-nrow(bm.ts.stock)] < low.vs.high.bm)
-      if(length(low.bm.years) == 0) low.years <- F else low.years <- T
-      high.bm.years <- which(bm.ts.stock$bm.stock[-nrow(bm.ts.stock)] >= low.vs.high.bm)
-      # ANd get what our carrying capacity is at this moment
-      cur.K <- tmp.stock.K$adj.K
+      bm.stash <- NULL
+      tl.stocks <- unique(bm.best$Stock[bm.best$troph.cat==tl])
       
-      # So first, get a sample 
-      method <- "not_sample"
-      if(method == 'sample')
-      {
-        # Pick one of these to sample if that's how we want to roll, if we have low biomass years (as
-        # defined by our cut off low.vs.high)
-        if(low.years == T)
-        {
-        if(bm.start < low.vs.high.bm) samp <- sample(low.bm.years,1)
-        if(bm.start >= low.vs.high.bm) samp <- sample(high.bm.years,1)
-        } # end If we have low years
-        if(low.years == F) samp <- sample(high.bm.years,1)
-        # The simple way to do it is just to sample from the natural mortality distribution
-        # Now using the right lambda, go look at trends from the stocks that are declining to see what's up there.
-        lam.samp <- stock.lambdas$lam.no.fish[samp] # Get the sample years.  
-      } # end the sample method.
-      
-      # Or do it the fun way...
-      if(method != "sample")
-      {
-      
-        # The fun way to do it is to do something multivariate! Note these are instantaneous now!!
-        if(bm.start < low.vs.high.bm) 
-        {
-          if(length(low.bm.years) >0)
-          {
-          lam.mn <- mean(stock.lambdas$lam.no.fish[low.bm.years],na.rm=T)
-          lam.sd <- sd(log(stock.lambdas$lam.no.fish[low.bm.years]),na.rm=T)
-          if(length(low.bm.years) == 1) lam.sd <- 0.2 # In case there is just one low biomass year
-          }
-          if(length(low.bm.years) ==0)
-          {
-            lam.mn <- mean(stock.lambdas$lam.no.fish,na.rm=T)
-            lam.sd <- sd(log(stock.lambdas$lam.no.fish),na.rm=T)
-          }
-          lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-          #if(is.na(lam.samp)) browser()
-        } # end if(bm.start < low.vs.high.bm) 
+      for (s in tl.stocks) {
+        count <- count + 1
+        stock.lambdas <- lambdas[[s]] 
+        bm.ts.stock <- bm.final[bm.final$Stock == s & bm.final$Year %in% first.year:last.year,]
         
-        if(bm.start >= low.vs.high.bm & bm.start < cur.K) 
-        {
-          lam.mn <- mean(stock.lambdas$lam.no.fish[high.bm.years],na.rm=T)
-          lam.sd <- sd(log(stock.lambdas$lam.no.fish[high.bm.years]),na.rm=T)
-          lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-          
-        } # end if(bm.start < low.vs.high.bm) 
+      
+        if(t ==1) {
+          bm.start <- bm.ts.stock$bm.stock[bm.ts.stock$Year == last.year]
+          #res.ts[[s]]$bm <- bm.start
+        }else{
+          bm.start <- res.ts[[t-1]]$bm[res.ts[[t-1]]$Stock == s]
+        }
         
-      } # end if(method != "sample")
-      #if(is.na(lam.samp)) browser()
-      while(is.na(lam.samp)) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-      # Final one, if we are above the K, we are just doing the high biomass scenario for now.
-      # Solution, sample from the lambdas at high biomass, but only take lambdas that are <= 1
-      if(bm.start >= cur.K) 
-      {
-        lam.mn <- mean(stock.lambdas$lam.no.fish[high.bm.years],na.rm=T)
-        lam.sd <- sd(log(stock.lambdas$lam.no.fish[high.bm.years]),na.rm=T)
-        lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
-        #if(is.na(lam.samp)) browser()
-        while(lam.samp >1) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
+        
+        # Get some starting points. These are for the current year
+       
+      
+      if (t == 1) tl.bm.last <- init.tl.bm[init.tl.bm$troph.cat == tl,]
+      
+      if (t > 1) {
+        bm.stocks <- data.frame(bm = NA,meta.dat)
+        for(s in stock.eco) bm.stocks$bm[bm.stocks$Stock == s] <- res.ts[[t-1]]$bm[res.ts[[t-1]]$Stock == s]
+        bm.stocks$bm <- bm.stocks$bm
+        stock.bm.last <- bm.stocks
+        eco.bm.last <- sum(bm.stocks$bm)
+        tl.bm.last <- bm.stocks |> collapse::fsubset(troph.cat == tl) |> collapse::fsummarise(bm.tl = sum(bm))
       }
-      #while(is.na(lam.samp)) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
+      if (tl == 5) {
+        base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
+        base.eco.K.tmp <- sim.eco.K |> collapse::fsubset(sim == j & Years ==t)
+        base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
+        
+        base.stock.K.tmp$tl.K <- tl.K
+        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$prop.bm.stock
+        
+        base.tl.K.tmp$prop.K.space <- base.tl.K.tmp$bm.tl/tl.bm.last$bm.tl
+        # We can then adjust the stock K's by the available K space in each stock
+        
+        base.stock.K.tmp$K.space <- NA
+        base.stock.K.tmp$K.space <- base.stock.K.tmp$bm.stock * (base.tl.K.tmp$prop.K.space-1)
+        base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
+        
+      }
+      if (tl < 5) {
+        base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
+        base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
+        
+        base.stock.K.tmp$tl.K <- tl.K
+        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$prop.bm.stock
+
+        base.tl.K.tmp$prop.K.space <- tl.K/tl.bm.last$bm.tl
+        # We can then adjust the stock K's by the available K space in each stock
+        
+        base.stock.K.tmp$K.space <- NA
+        #initial Ks are adjusted to be stock-specific based on proportions of stock biomass, then
+        #the same proportion of K-space is partitioned to each of the stocks (how much a stock will actually
+        #use is based on the lambdas)
+        base.stock.K.tmp$K.space <- base.stock.K.tmp$bm.stock * (base.tl.K.tmp$prop.K.space-1)
+        base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
+      }
+      base.stock.K.tmp <- left_join(base.stock.K.tmp,av.wgt,by=c("Stock","troph.cat"))
+      # And now we can get a K in numbers....
+      base.stock.K.tmp$adj.K.num <- base.stock.K.tmp$adj.K/base.stock.K.tmp$mn.wgt
       
-# Simple way to include removals
-
-if(is.null(catch$er.mn)) {ex.rate = 0; ex.sd = 0}
-if(!is.null(catch$er.mn))
-{
-  er.mn <- catch$er.mn
-  if(!is.null(catch$er.sd)) er.sd <- catch$er.sd
-  if(is.null(catch$er.sd)) er.sd <- data.frame(er.sd=0,Stock =s)
-  ex.rate = er.mn$ex.mn[er.mn$Stock == s]
-  ex.sd = er.sd$ex.sd[er.sd$Stock == s]
-} # end if(!is.null(catch$er.mn))
-if(is.null(catch$catch)) 
-{
-  #print(ex.rate)
-  # Convert proportion to F
-  ex.rate <- -log(1-ex.rate)
-  er <- rlnorm(1,log(ex.rate),ex.sd)
-  # Go from F back to proportion
-  er <- 1-exp(-er)
-  removals <- bm.start*er
-} # end if(is.null(catch$catch)) 
+      if (t==1 & j==1 & count==1) {
+        
+        base.stock.K <- base.stock.K.tmp
+        base.tl.K <- base.tl.K.tmp
+        base.eco.K <- base.eco.K.tmp
+      } else {
+        base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
+        base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
+        base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
+      }# end the else...
       
-# If you have a catch estimate for the stock
-  if(!is.null(catch$catch))
-  {
-    limit.er <- 0.4
-    removals.tmp <- catch$catch$catch[catch$catch$Stock ==s]
-    er <- removals.tmp/(bm.start+removals.tmp)
-    if(er > limit.er) 
-    {
-      removals.tmp <- limit.er*bm.start
-      er <- limit.er
-    }
-    removals <- removals.tmp
-  } # end if(!is.null(catch$catch))
+      res <- pop.dam()
+      
+      results[[s]] <- data.frame(bm = res$tst.res,removals =res$removals,ex.rate = res$ex.rate,
+                 Stock = s,sim= j,lambda = res$lambda,Years=t,
+                 troph.cat = tl,
+                 K.bm = res$K)
+      
+      bm.stash[[s]] <- res$tst.res
+      }#end the s loop
+      if (tl == 5) next.tl.K <- sum(do.call('rbind', bm.stash))/sim.tl.4.to.5[[j]][t]
+      if (tl == 4) next.tl.K <- sum(do.call('rbind', bm.stash))/sim.tl.3.to.4[[j]][t]
+      #putting the following line here assumes that all population dynamics happened instantaneously at the 
+      #very beginning of the given year
+      if (tl > 3) Ks[[j]] <- rbind(Ks[[j]], data.frame(bm=next.tl.K, tl = tl - 1, Years = t, sim = j))
+    
+      #tmp[[as.character(tl)]] <- do.call("rbind", results)     
+      
+    } #end trophic level loop
 
-
-#print(er)
-
-#lam.samp <- rlnorm(1,log(1),0.1)
-#tst.res <- (lam.samp)*bm.start - removals
-# We want to grow after removals because otherwise we can get negative values given exploitation was
-# calculated using the initial biomass
-tst.res <- lam.samp*(bm.start - removals)
-     
-# Because I'm only doing this one year at a time, there's something in here I need to mess around with to get the output tidy...
-
-res.ts[[s]] <- rbind(res.ts[[s]] ,data.frame(bm = tst.res,removals =removals,ex.rate = er,
-                                             Stock = s,sim= j,lambda = lam.samp,Years=t,
-                                             troph.cat = as.numeric(unique(bm.tot$troph.cat[bm.tot$Stock ==s])),
-                                             K.bm = tmp.stock.K$adj.K))
-#if(tst$r$r[1] > 14) stop("WTF")
-#abund.new[[s]] <- data.frame(abund = tst$Pop$abund[2])
-#res.r[[s]] <- data.frame(tst$r[1,-2],stock=s,sim=j)
-
-  } # end stock loop
-  #res.tst[[t]] <- do.call("rbind",res.ts)
-  } # end the t looping through each year.
-  
-#ggplot(base.stock.K) + geom_line(aes(x= Years,y=bm.stock,group=Stock,color=Stock)) + facet_wrap(~troph.cat) + scale_y_log10()
-  
   # Unpack the results
-  ts.unpack[[j]] <- do.call('rbind',res.ts)
-  
+  #ts.unpack[[j]] <- do.call('rbind',res.ts)
+  res.ts[[t]] <- do.call("rbind", results)
 #ggplot(ts.unpack[[j]]) + geom_line(aes(x= Years,y=abund,group=Stock,color=Stock)) + facet_wrap(~troph.cat) + scale_y_log10()
   
   
@@ -730,7 +710,8 @@ res.ts[[s]] <- rbind(res.ts[[s]] ,data.frame(bm = tst.res,removals =removals,ex.
   print(paste("Simulation ", j))
   print(signif(timer,digits=2))
   
-} # end n.sims
+} #end projected years
+  }# end n.sims
 
 # Unpack all the results.
 ts.final <- do.call("rbind",ts.unpack)
