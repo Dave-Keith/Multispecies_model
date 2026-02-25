@@ -376,11 +376,12 @@ for(i in 1:n.sims)
     for(s in tl.stocks)
     {
       count = count+1
+      #browser()
       # Now get the time series for each stock...
       if(count == 1 ||  n.stock.tl != 2)
       {
         tmp.dat <- bm.best[bm.best$Stock ==s,]
-        tmp.cor <- pacf(tmp.dat$prop.bm.tl,plot=F) # Get the correlation, use AR1 and AR2 but no more.
+        tmp.cor <- pacf(tmp.dat$prop.bm.stock.tl,plot=F) # Get the correlation, use AR1 and AR2 but no more.
         tmp.cor.lag.1 <- tmp.cor$acf[1]
         #tmp.cor.lag.2 <- tmp.cor$acf[2]
         #tmp.beta <- estBetaParams(mean(tmp.dat$prop.bm.tl),sd(tmp.dat$prop.bm.tl)^2)
@@ -388,8 +389,11 @@ for(i in 1:n.sims)
         bm.logit <- logit(tmp.dat$prop.bm.stock.tl)
         start.bm.logit <- bm.logit[length(bm.logit)]
         mn.bm.logit <- mean(bm.logit)
-        # Use the most recent bm on logit scale as the 'mean' value for the simulation
-        mn.bm.logit <- start.bm.logit
+        # DK Note, I thought about using the most recent bm on logit scale as the 'mean' value for the simulation to 
+        # start where we finished, but I don't like that behaviour in TL3, so going to use the mean which means the stocks
+        # will want to go back to an average value of the 'sharing' of biomass. Shit-canning this will make
+        # some of the below unnecessaril complicated.
+        #mn.bm.logit <- start.bm.logit
         # And the standard deviation
         sd.bm.logit <- sd(bm.logit)
         diff.bm.logit <- start.bm.logit - mn.bm.logit
@@ -552,16 +556,16 @@ for(j in 1:n.sims)
     # And now we can get a K in numbers....
     base.stock.K.tmp$adj.K.num <- base.stock.K.tmp$adj.K/base.stock.K.tmp$mn.wgt
     # Since I have Years and sim recorded, I should just be able to recursivly rbind this...
-    if(t ==1 & j == 1) 
-    {
-      base.stock.K <- base.stock.K.tmp
-      base.tl.K <- base.tl.K.tmp
-      base.eco.K <- base.eco.K.tmp
-    } else {
-            base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
-            base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
-            base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
-            } # end the else...
+    # if(t ==1 & j == 1) 
+    # {
+    #   base.stock.K <- base.stock.K.tmp
+    #   base.tl.K <- base.tl.K.tmp
+    #   base.eco.K <- base.eco.K.tmp
+    # } else {
+    #         base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
+    #         base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
+    #         base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
+    #         } # end the else...
 
   for(s in stock.eco)
   {
@@ -587,7 +591,12 @@ for(j in 1:n.sims)
       
       # Sort out which of the years are low or high bm
       # I'm using 0.5 as the cut off, other options are valid (0.4 is my fav...)
-      low.vs.high <- 0.5
+      low.vs.high <- 0.4
+      if(s == "ICES-HAWG_ NS-IV 3a,7d_Clupea_harengus")  low.vs.high <- 0.6 # DK Note, using 0.6 for herring stock didn't decline below 50% in this time period.
+      if(s == "ICES-WGNSSK_NS4 _Scopthalmus_maximus")  low.vs.high <- 0.9 # # DK Note, using 0.9 for this stock because it only declined to 66% of max in time period.
+      if(s == "ICES-HAWG_NS_Ammodytes_tobianus")  l.v.h <- 0.6 # DK Note, trying to make dynamics more realistic
+      
+      #if(s == "ICES-WGNSSK_NS 4-7d_Merlangius_merlangus")  browser()
       low.vs.high.bm <- low.vs.high * max(bm.ts.stock$bm.stock)
       # Have to drop the final year because we don't have a lambda estimate for the final year
       low.bm.years <- which(bm.ts.stock$bm.stock[-nrow(bm.ts.stock)] < low.vs.high.bm)
@@ -635,6 +644,7 @@ for(j in 1:n.sims)
           #if(is.na(lam.samp)) browser()
         } # end if(bm.start < low.vs.high.bm) 
         
+        
         if(bm.start >= low.vs.high.bm & bm.start < cur.K) 
         {
           lam.mn <- mean(stock.lambdas$lam.no.fish[high.bm.years],na.rm=T)
@@ -654,7 +664,9 @@ for(j in 1:n.sims)
         lam.sd <- sd(log(stock.lambdas$lam.no.fish[high.bm.years]),na.rm=T)
         lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
         #if(is.na(lam.samp)) browser()
+        
         while(lam.samp >1) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
+        
       }
       #while(is.na(lam.samp)) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
       
@@ -663,6 +675,7 @@ for(j in 1:n.sims)
 if(is.null(catch$er.mn)) {ex.rate = 0; ex.sd = 0}
 if(!is.null(catch$er.mn))
 {
+  #browser()
   er.mn <- catch$er.mn
   if(!is.null(catch$er.sd)) er.sd <- catch$er.sd
   if(is.null(catch$er.sd)) er.sd <- data.frame(er.sd=0,Stock =s)
@@ -701,6 +714,7 @@ if(is.null(catch$catch))
 #tst.res <- (lam.samp)*bm.start - removals
 # We want to grow after removals because otherwise we can get negative values given exploitation was
 # calculated using the initial biomass
+#if(s == "ICES-WGNSSK_NS4 _Scopthalmus_maximus") browser()
 tst.res <- lam.samp*(bm.start - removals)
      
 # Because I'm only doing this one year at a time, there's something in here I need to mess around with to get the output tidy...

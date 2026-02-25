@@ -1,11 +1,12 @@
-pop.dam <- function(lambda = stock.lambdas,stock.K = tl.K,
-                    bm.stock = bm.ts.stock,low.vs.high = 0.5,method="not_sample")
+pop.dam <- function(lambda = stock.lambdas,stock.K = stock.K,bm.start=bm.start, catch = catch,stock = s,
+                    bm.stock = bm.ts.stock,low.vs.high = 0.4,method="not_sample")
 {
 
   #browser()
   # Sort out which of the years are low or high bm
   # I'm using 0.5 as the cut off, other options are valid (0.4 is my fav...)
   #low.vs.high <- low.vs.high
+  
   low.vs.high.bm <- low.vs.high * max(bm.stock$bm.stock)
   # Have to drop the final year because we don't have a lambda estimate for the final year
   low.bm.years <- which(bm.stock$bm.stock[-nrow(bm.stock)] < low.vs.high.bm)
@@ -15,7 +16,9 @@ pop.dam <- function(lambda = stock.lambdas,stock.K = tl.K,
   cur.K <- stock.K
   
   # So first, get a sample 
-  method <- "not_sample"
+  method <- method
+  
+  
   if(method == 'sample')
   {
     # Pick one of these to sample if that's how we want to roll, if we have low biomass years (as
@@ -85,16 +88,17 @@ pop.dam <- function(lambda = stock.lambdas,stock.K = tl.K,
   if(is.null(catch$er.mn)) {ex.rate = 0; ex.sd = 0}
   if(!is.null(catch$er.mn))
   {
-    er.mn <- catch$er.mn
+    er.mn <- catch$er.mn[]
     if(!is.null(catch$er.sd)) er.sd <- catch$er.sd
-    if(is.null(catch$er.sd)) er.sd <- data.frame(er.sd=0,Stock =s)
-    ex.rate = er.mn$ex.mn[er.mn$Stock == s]
-    ex.sd = er.sd$ex.sd[er.sd$Stock == s]
+    if(is.null(catch$er.sd)) er.sd <- data.frame(er.sd=0,Stock =stock)
+    ex.rate = er.mn$ex.mn[er.mn$Stock == stock]
+    ex.sd = er.sd$ex.sd[er.sd$Stock == stock]
   } # end if(!is.null(catch$er.mn))
   if(is.null(catch$catch)) 
   {
     #print(ex.rate)
     # Convert proportion to F
+    #browser()
     ex.rate <- -log(1-ex.rate)
     er <- rlnorm(1,log(ex.rate),ex.sd)
     # Go from F back to proportion
@@ -106,7 +110,7 @@ pop.dam <- function(lambda = stock.lambdas,stock.K = tl.K,
   if(!is.null(catch$catch))
   {
     limit.er <- 0.4
-    removals.tmp <- catch$catch$catch[catch$catch$Stock ==s]
+    removals.tmp <- catch$catch$catch[catch$catch$Stock ==stock]
     er <- removals.tmp/(bm.start+removals.tmp)
     if(er > limit.er) 
     {

@@ -81,7 +81,8 @@ for(s in  stock.eco)
   #pnm[[s]] <- 1-exp(-lambdas[[s]]$nm.opt)
   #mx[[s]] <- lambdas[[s]]$fecund.opt
   #vpa[[s]] <- lambdas[[s]]$res$est.abund
-} # end for(s in  stock.eco)
+} 
+# end for(s in  stock.eco)
 # Combine the biomass and abundance data into a dataframe
 bm.tst <- do.call("rbind",bm)
 
@@ -470,8 +471,11 @@ for(i in 1:n.sims)
         bm.logit <- logit(tmp.dat$prop.bm.stock.tl)
         start.bm.logit <- bm.logit[length(bm.logit)]
         mn.bm.logit <- mean(bm.logit)
-        # Use the most recent bm on logit scale as the 'mean' value for the simulation
-        mn.bm.logit <- start.bm.logit
+        #DK Note, I thought about using the most recent bm on logit scale as the 'mean' value for the simulation to 
+        # start where we finished, but I don't like that behaviour in TL3, so going to use the mean which means the stocks
+        # will want to go back to an average value of the 'sharing' of biomass. Shit-canning this will make
+        # some of the below unnecessaril complicated.
+        #mn.bm.logit <- start.bm.logit
         # And the standard deviation
         sd.bm.logit <- sd(bm.logit)
         diff.bm.logit <- start.bm.logit - mn.bm.logit
@@ -484,19 +488,49 @@ for(i in 1:n.sims)
                                              n = n.yrs.proj,innov = c(0,rnorm(n.yrs.proj-1,0,sd.bm.logit))) + mn.bm.logit))
         sim.Ks[[s]] <- data.frame(Years = 1:n.yrs.proj, sim = i,
                                        Stock = s, troph.cat = tl,
-                                       bm.stock = tmp.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
-                                      prop.bm.stock = tmp.prop.bm)
+                                       cor.prop.bm = NA,
+                                       bm.stock = bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
+                                       prop.bm.stock = tmp.prop.bm)
       } # end the if(count == 1 ||  n.stock.tl != 2)
       # If there are only 2 stocks in a trophic level, then the second stock get the rest of the trophic levels biomass
       
-      if(count == 2 & n.stock.tl == 2) 
+      
+      
+      if(n.stock.tl == 2) 
       {
-        sim.Ks[[s]] <-  data.frame(Years = 1:n.yrs.proj, sim=i,
-                                   Stock = s, troph.cat = as.numeric(tl),
-                                   bm.stock = (1-tmp.prop.bm)*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
-                                   prop.bm.stock = 1-tmp.prop.bm)
+    
+        if(count == 1)  sim.Ks[[s]] <-   data.frame(Years = 1:n.yrs.proj, sim = i,
+                                                         Stock = s, troph.cat = tl,
+                                                         cor.prop.bm = tmp.prop.bm,
+                                                         bm.stock = tmp.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
+                                                         prop.bm.stock = tmp.prop.bm)
+        
+            
+        if(count == 2)  sim.Ks[[s]] <-  data.frame(Years = 1:n.yrs.proj, sim=i,
+                                                        Stock = s, troph.cat = as.numeric(tl),
+                                                        cor.prop.bm = 1-tmp.prop.bm,
+                                                        bm.stock = (1-tmp.prop.bm)*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl],
+                                                        prop.bm.stock = 1-tmp.prop.bm)
       } # end the case of just 2 stocks
     } # end the stocks loop
+    
+    # Now we need to get the proportions summing to 1
+    if(tl != 3)
+    {
+      #browser()
+      tl.stock.list <- as.data.frame(do.call('rbind',sim.Ks[tl.stocks]))
+      tl.stock.list <- tl.stock.list |> dplyr::group_by(Years) |> dplyr::mutate(cor.prop.bm = prop.bm.stock/sum(prop.bm.stock))
+      # Now remake the sim.Ks thing so it works with the below... clunky yes...
+      for(s in tl.stocks) 
+      {
+        tl.stock.list.tmp <- tl.stock.list[tl.stock.list$Stock ==s,]
+        sim.Ks[[s]] <- data.frame(Years = 1:n.yrs.proj, sim = i,
+                                  Stock = s, troph.cat = tl,
+                                  prop.bm.stock = tl.stock.list.tmp$prop.bm.stock,
+                                  cor.prop.bm = tl.stock.list.tmp$cor.prop.bm,
+                                  bm.stock = tl.stock.list.tmp$cor.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl])
+      }
+    }# end the tl if
   } # end the trophic level loop
   sim.K.stock[[i]] <- do.call("rbind",sim.Ks)
   
@@ -584,15 +618,15 @@ av.wgt <- data.frame(Stock = av.wgt$Stock,troph.cat = as.numeric(av.wgt$troph.ca
 
 # So everything will need to get wrapped up in a simulation loop
 res.ts <- NULL
-Ks <- NULL
-ts.unpack <- NULL
 results <- NULL
 tmp <- NULL
+ts.unpack <- NULL
 
-
+#browser()
 
 for(j in 1:n.sims)
 {
+  Ks <- NULL
   st.time <- Sys.time()
   if (j == 1) count <- 0
   
@@ -605,22 +639,7 @@ for(j in 1:n.sims)
       bm.stash <- NULL
       tl.stocks <- unique(bm.best$Stock[bm.best$troph.cat==tl])
       
-      for (s in tl.stocks) {
-        count <- count + 1
-        stock.lambdas <- lambdas[[s]] 
-        bm.ts.stock <- bm.final[bm.final$Stock == s & bm.final$Year %in% first.year:last.year,]
-        
-      
-        if(t ==1) {
-          bm.start <- bm.ts.stock$bm.stock[bm.ts.stock$Year == last.year]
-          #res.ts[[s]]$bm <- bm.start
-        }else{
-          bm.start <- res.ts[[t-1]]$bm[res.ts[[t-1]]$Stock == s]
-        }
-        
-        
-        # Get some starting points. These are for the current year
-       
+      # Get some starting points. These are for the current year
       
       if (t == 1) tl.bm.last <- init.tl.bm[init.tl.bm$troph.cat == tl,]
       
@@ -632,13 +651,14 @@ for(j in 1:n.sims)
         eco.bm.last <- sum(bm.stocks$bm)
         tl.bm.last <- bm.stocks |> collapse::fsubset(troph.cat == tl) |> collapse::fsummarise(bm.tl = sum(bm))
       }
+      #if(t > 1) browser()
       if (tl == 5) {
         base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
         base.eco.K.tmp <- sim.eco.K |> collapse::fsubset(sim == j & Years ==t)
         base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
         
         base.stock.K.tmp$tl.K <- tl.K
-        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$prop.bm.stock
+        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$cor.prop.bm
         
         base.tl.K.tmp$prop.K.space <- base.tl.K.tmp$bm.tl/tl.bm.last$bm.tl
         # We can then adjust the stock K's by the available K space in each stock
@@ -653,8 +673,8 @@ for(j in 1:n.sims)
         base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
         
         base.stock.K.tmp$tl.K <- tl.K
-        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$prop.bm.stock
-
+        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$cor.prop.bm
+        
         base.tl.K.tmp$prop.K.space <- tl.K/tl.bm.last$bm.tl
         # We can then adjust the stock K's by the available K space in each stock
         
@@ -669,50 +689,76 @@ for(j in 1:n.sims)
       # And now we can get a K in numbers....
       base.stock.K.tmp$adj.K.num <- base.stock.K.tmp$adj.K/base.stock.K.tmp$mn.wgt
       
-      if (t==1 & j==1 & count==1) {
-        
-        base.stock.K <- base.stock.K.tmp
-        base.tl.K <- base.tl.K.tmp
-        base.eco.K <- base.eco.K.tmp
-      } else {
-        base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
-        base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
-        base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
-      }# end the else...
       
-      res <- pop.dam()
+      
+      for (s in tl.stocks) 
+      {
+        #browser()
+        count <- count + 1
+        stock.lambdas <- lambdas[[s]] 
+        bm.ts.stock <- bm.final[bm.final$Stock == s & bm.final$Year %in% first.year:last.year,]       
+        
+       
+        if(t ==1) {
+          bm.start <- bm.ts.stock$bm.stock[bm.ts.stock$Year == last.year]
+          #res.ts[[s]]$bm <- bm.start
+        }else{
+          bm.start <- res.ts[[t-1]]$bm[res.ts[[t-1]]$Stock == s]
+        }
+        
+        
+      
+      # if (t==1 & j==1 & count==1) {
+      #   
+      #   base.stock.K <- base.stock.K.tmp
+      #   base.tl.K <- base.tl.K.tmp
+      #   base.eco.K <- base.eco.K.tmp
+      # } else {
+      #   base.stock.K <- rbind(base.stock.K,base.stock.K.tmp)
+      #   base.tl.K <- rbind(base.tl.K,base.tl.K.tmp)
+      #   base.eco.K <- rbind(base.eco.K,base.eco.K.tmp)
+      # }# end the else...
+      #browser()
+        l.v.h <- 0.4
+        if(s == "ICES-HAWG_ NS-IV 3a,7d_Clupea_harengus")  l.v.h <- 0.6 # DK Note, using 0.6 for herring stock didn't decline below 50% in this time period.
+        if(s == "ICES-WGNSSK_NS4 _Scopthalmus_maximus")  l.v.h <- 0.9 # # DK Note, using 0.9 for this stock because it only declined to 66% of max in time period.
+        if(s == "ICES-HAWG_NS_Ammodytes_tobianus")  l.v.h <- 0.6 # DK Note, trying to make dynamics more realistic
+        cur.K <- base.stock.K.tmp$adj.K[base.stock.K.tmp$Stock ==s]
+        res <- pop.dam(lambda = stock.lambdas,stock.K = cur.K,bm.start = bm.start, catch = catch, stock = s,
+                     bm.stock = bm.ts.stock,low.vs.high = l.v.h,method="not_sample")
       
       results[[s]] <- data.frame(bm = res$tst.res,removals =res$removals,ex.rate = res$ex.rate,
                  Stock = s,sim= j,lambda = res$lambda,Years=t,
                  troph.cat = tl,
                  K.bm = res$K)
       
-      bm.stash[[s]] <- res$tst.res
+      bm.stash[[s]] <- res$K
       }#end the s loop
+      # now this gets the k for the next trophic level down
       if (tl == 5) next.tl.K <- sum(do.call('rbind', bm.stash))/sim.tl.4.to.5[[j]][t]
       if (tl == 4) next.tl.K <- sum(do.call('rbind', bm.stash))/sim.tl.3.to.4[[j]][t]
       #putting the following line here assumes that all population dynamics happened instantaneously at the 
       #very beginning of the given year
+      #browser()
       if (tl > 3) Ks[[j]] <- rbind(Ks[[j]], data.frame(bm=next.tl.K, tl = tl - 1, Years = t, sim = j))
-    
+     
       #tmp[[as.character(tl)]] <- do.call("rbind", results)     
       
     } #end trophic level loop
-
+   
   # Unpack the results
-  #ts.unpack[[j]] <- do.call('rbind',res.ts)
+  #browser()
   res.ts[[t]] <- do.call("rbind", results)
-#ggplot(ts.unpack[[j]]) + geom_line(aes(x= Years,y=abund,group=Stock,color=Stock)) + facet_wrap(~troph.cat) + scale_y_log10()
-  
+
+} #end projected years
+  ts.unpack[[j]] <- do.call("rbind", res.ts)
   
   # Pop a note when done each simulation
   timer <- Sys.time() - st.time
   print(paste("Simulation ", j))
   print(signif(timer,digits=2))
-  
-} #end projected years
   }# end n.sims
-
+#browser()
 # Unpack all the results.
 ts.final <- do.call("rbind",ts.unpack)
 
@@ -770,6 +816,7 @@ colors <- distinct(bm.best, spec.tl, color)
 pal <- colors$color
 names(pal) <- colors$spec.tl
 
+#browser()
 p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl),linewidth=2) + 
   facet_wrap(~troph.cat,scales = 'free_y') +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
   guides(colour = guide_legend(nrow = 5)) + scale_color_manual(values=pal) +
