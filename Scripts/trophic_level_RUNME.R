@@ -94,7 +94,7 @@ for(s in names(for.tune.all)) if(s %in% eco.stocks) eco.lambdas[[s]] <- res.lamb
 # ASR.long <- left_join(ASR.long,all.troph,by = join_by(Gen.Spec==Species))
 
 # Try the function
-exploit.mn <- data.frame(ex.mn = c(0.01, 0.01, 0.20,  0.20, 0.01, 0.01, 0.01, 0.01, 0.20, 0.20, 0.20, 0.01, 0.01, 0.20),Stock = names(stock.lst)) # Fish TL 5 hard
+exploit.mn <- data.frame(ex.mn = c(0.01, 0.01, 0.30,  0.30, 0.01, 0.01, 0.01, 0.01, 0.30, 0.30, 0.30, 0.01, 0.01, 0.30),Stock = names(stock.lst)) # Fish TL 5 hard
 exploit.mn <- data.frame(ex.mn = c(0.01, 0.01, 0.01, 0.01, 0.20, 0.20, 0.20, 0.20, 0.01, 0.01, 0.01, 0.20 ,0.20, 0.01),Stock = names(stock.lst)) # Fish TL 4 hard
 exploit.mn <- data.frame(ex.mn = c(0.20, 0.20, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01),Stock = names(stock.lst)) # Fish TL 3 hard
 exploit.mn <- data.frame(ex.mn = rep(0.01,length(stock.lst)),Stock = names(stock.lst)) # minimal fishing
@@ -153,7 +153,7 @@ tst <- result$sim.ts[result$sim.ts$species == "Scophthalmus maximus",]
 tst <- result$sim.ts[result$sim.ts$species == "Ammodytes tobianus",]
 tst <- result$sim.ts[result$sim.ts$species == "Clupea harengus",]
 
-ggplot(tst) + geom_line(aes(x=Years,y=K.bm,group=as.character(sim),color=as.character(sim))) + scale_y_log10()
+ggplot(tst) + geom_line(aes(x=Years,y=bm,group=as.character(sim),color=as.character(sim))) + scale_y_log10()
 
 summary(tst$K.bm)
 

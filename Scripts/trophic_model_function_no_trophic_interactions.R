@@ -145,17 +145,17 @@ lambdas <- lambdas.tmp
 # Biomass by trophic level over time
 bm.tl.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=bm.tl,group=as.character(troph.cat),color=as.character(troph.cat))) + 
   scale_color_manual(values = c("blue","red","darkgrey","lightgreen")) + scale_y_log10(name="Biomass")
-save_plot(paste0(repo.loc,"/Figures/Biomass_by_trophic_level.png"),bm.tl.plt,base_height = 8,base_width = 11)
+save_plot(paste0(repo.loc,"/Figures/NI/Biomass_by_trophic_level.png"),bm.tl.plt,base_height = 8,base_width = 11)
 # This is real good now...
 prop.bm.tl.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=prop.bm.tl,group=as.character(troph.cat),color=as.character(troph.cat))) + 
   scale_color_manual(values = c("blue","red","darkgrey","lightgreen")) + 
   scale_y_continuous(name="Proportion of Biomass")
-save_plot(paste0(repo.loc,"/Figures/Prop_biomass_by_trophic_level.png"),prop.bm.tl.plt,base_height = 8,base_width = 11)
+save_plot(paste0(repo.loc,"/Figures/NI/Prop_biomass_by_trophic_level.png"),prop.bm.tl.plt,base_height = 8,base_width = 11)
 
 # The biomass for the ecosystem
 bm.eco.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=bm.eco)) + 
                                 scale_y_continuous(name="Biomass",limits = c(0,NA))
-save_plot(paste0(repo.loc,"/Figures/Biomass_ns_ecosystem.png"),bm.eco.plt,base_height = 8,base_width = 11)
+save_plot(paste0(repo.loc,"/Figures/NI/Biomass_ns_ecosystem.png"),bm.eco.plt,base_height = 8,base_width = 11)
 
 
 # The 'transfer efficiency' between our trophic levels
@@ -194,13 +194,13 @@ stock.prop.bm.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=prop.bm.stock.tl,g
                   facet_wrap(~troph.cat) + guides(colour = guide_legend(nrow = 5)) + theme(legend.position = 'top') +
                   scale_y_log10(name= "Proportion of biomass",n.breaks=10) + scale_x_continuous(name="",labels = c(1990,2000,2010),breaks=c(1990,2000,2010))+
                   scale_color_manual(values=pal)
-save_plot(paste0(repo.loc,"/Figures/Prop_Biomass_ns_by_stock.png"),stock.prop.bm.plt,base_height = 8,base_width = 15)
+save_plot(paste0(repo.loc,"/Figures/NI/Prop_Biomass_ns_by_stock.png"),stock.prop.bm.plt,base_height = 8,base_width = 15)
 
 stock.bm.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=bm.stock,group = Stock,color=spec.tl),linewidth=2) + 
                      facet_wrap(~troph.cat) + scale_x_continuous(name="",labels = c(1990,2000,2010),breaks=c(1990,2000,2010))+
                      scale_y_log10(name = "Biomass",n.breaks=7) + theme(legend.position = 'top') +
                      guides(colour = guide_legend(nrow = 5)) + scale_color_manual(values=pal)
-save_plot(paste0(repo.loc,"/Figures/Biomass_ns_by_stock.png"),stock.bm.plt,base_height = 8,base_width = 15)
+save_plot(paste0(repo.loc,"/Figures/NI/Biomass_ns_by_stock.png"),stock.bm.plt,base_height = 8,base_width = 15)
 
 
 # So Model 1: You're Basic
@@ -430,16 +430,16 @@ sim.K.stocks$Species <- substr(sim.K.stocks$Stock,14,100)
 sim.stock.K.plt <- ggplot(sim.K.stocks[sim.K.stocks$sim==1,]) + geom_line(aes(x=Years,y=bm.stock,group=Species,color=Species),linewidth=2) + 
                              facet_wrap(~troph.cat) + scale_y_log10(name="Biomass") + theme(legend.position = 'top') +
                              guides(colour = guide_legend(nrow = 7))
-save_plot(filename = paste0(repo.loc,"/Figures/Simulation_stock_K.png"),sim.stock.K.plt,base_height = 8,base_width = 11)
+save_plot(filename = paste0(repo.loc,"/Figures/NI/Simulation_stock_K.png"),sim.stock.K.plt,base_height = 8,base_width = 11)
 
 sim.tl.K.plt <- ggplot(sim.troph.K) + geom_line(aes(x=Years,y=bm.tl,group=as.factor(sim),color=as.factor(sim))) + 
                       facet_wrap(~troph.cat) + theme(legend.position='none') + 
                       scale_y_log10(name="Biomass")
 
-save_plot(filename = paste0(repo.loc,"/Figures/Simulation_trophic_K.png"),sim.tl.K.plt,base_height = 8,base_width = 11)
+save_plot(filename = paste0(repo.loc,"/Figures/NI/Simulation_trophic_K.png"),sim.tl.K.plt,base_height = 8,base_width = 11)
 sim.eco.K.plt <- ggplot(sim.eco.K) + geom_line(aes(x=Years,y=bm,group=as.factor(sim),color=as.factor(sim))) +
                                  theme(legend.position = 'none')
-save_plot(filename = paste0(repo.loc,"/Figures/Simulation_eco_K.png"),sim.eco.K.plt,base_height = 8,base_width = 11)
+save_plot(filename = paste0(repo.loc,"/Figures/NI/Simulation_eco_K.png"),sim.eco.K.plt,base_height = 8,base_width = 11)
 
 # Comparing TL and ecosystem K going stock by stock with the trophic level and ecosystem K's that I originally made up
 # And it's not perfect, but I think for a first pass this work, they keep the characteristics we want in terms of
@@ -770,45 +770,45 @@ quants <- left_join(quants,meta.dat,by = c("Stock","troph.cat"))
 
 
 # If happy save the 2 objects
-saveRDS(object = ts.final,file = paste0(repo.loc,"/Results/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
+saveRDS(object = ts.final,file = paste0(repo.loc,"/Results/NI/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
                                          "_time_series_projections.Rds"))
 
-saveRDS(object = quants,file = paste0(repo.loc,"/Results/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
+saveRDS(object = quants,file = paste0(repo.loc,"/Results/NI/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
                                        "_time_series_quantiles.Rds"))
 # 
 # saveRDS(object = r.final,file = paste0(repo.loc,"/Results/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
 #                                        "_r_projections.Rds"))
 
-
+n.breaks <- 6
 # Two simple plots. 
 p.sims <- ggplot(ts.final ) + geom_line(aes(x=Years,y=bm,group = sim,color=sim),alpha=0.8) +
-  facet_wrap(~Stock,scales = 'free_y') + 
-  scale_x_continuous(breaks = seq(1,50,by=49),labels=c(2015,2065)) +
+  facet_wrap(~Stock) + 
+  scale_x_continuous(name='',breaks = seq(0,n.yrs.proj,length=n.breaks)) +
   scale_y_log10(name = "Biomass") + 
   theme(legend.position = 'none') 
 
-save_plot(paste0(repo.loc,"/Figures/biomass_trends.png"),p.sims,base_height = 12,base_width = 24)
+save_plot(paste0(repo.loc,"/Figures/NI/biomass_trends.png"),p.sims,base_height = 12,base_width = 24)
 
 
 
-p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl)) + 
-  facet_wrap(~troph.cat,scales = 'free_y') +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
-  guides(colour = guide_legend(nrow = 7)) +
-  scale_x_continuous(breaks = seq(1,50,by=49),labels=c(2015,2065)) 
-  #geom_ribbon(data=quants, aes(x=Years,ymax=U.50,ymin = L.50),alpha=0.5,fill='blue',color='blue') 
-save_plot(paste0(repo.loc,"/Figures/Quantile_abundance_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
-
+# p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl)) + 
+#   facet_wrap(~troph.cat,scales = 'free_y') +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
+#   guides(colour = guide_legend(nrow = 7)) +
+#   scale_x_continuous(name='',breaks = seq(0,n.yrs.proj,length=n.breaks)) 
+#   #geom_ribbon(data=quants, aes(x=Years,ymax=U.50,ymin = L.50),alpha=0.5,fill='blue',color='blue') 
+# save_plot(paste0(repo.loc,"/Figures/NI/Quantile_abundance_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
+# 
 
 colors <- distinct(bm.best, spec.tl, color)
 pal <- colors$color
 names(pal) <- colors$spec.tl
 
 p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl),linewidth=2) + 
-  facet_wrap(~troph.cat,scales = 'free_y') +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
+  facet_wrap(~troph.cat) +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
   guides(colour = guide_legend(nrow = 5)) + scale_color_manual(values=pal) +
-  scale_x_continuous(name="",breaks = seq(1,50,by=49),labels=c(2015,2065)) 
+  scale_x_continuous(name='',breaks = seq(0,n.yrs.proj,length=n.breaks)) 
 #geom_ribbon(data=quants, aes(x=Years,ymax=U.50,ymin = L.50),alpha=0.5,fill='blue',color='blue') 
-save_plot(paste0(repo.loc,"/Figures/Quantile_biomass_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
+save_plot(paste0(repo.loc,"/Figures/NI/Quantile_biomass_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
 
 
 

@@ -146,17 +146,17 @@ lambdas <- lambdas.tmp
 # Biomass by trophic level over time
 bm.tl.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=bm.tl,group=as.character(troph.cat),color=as.character(troph.cat))) + 
   scale_color_manual(values = c("blue","red","darkgrey","lightgreen")) + scale_y_log10(name="Biomass")
-save_plot(paste0(repo.loc,"/Figures/Biomass_by_trophic_level.png"),bm.tl.plt,base_height = 8,base_width = 11)
+save_plot(paste0(repo.loc,"/Figures/TD/Biomass_by_trophic_level.png"),bm.tl.plt,base_height = 8,base_width = 11)
 # This is real good now...
 prop.bm.tl.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=prop.bm.tl,group=as.character(troph.cat),color=as.character(troph.cat))) + 
   scale_color_manual(values = c("blue","red","darkgrey","lightgreen")) + 
   scale_y_continuous(name="Proportion of Biomass")
-save_plot(paste0(repo.loc,"/Figures/Prop_biomass_by_trophic_level.png"),prop.bm.tl.plt,base_height = 8,base_width = 11)
+save_plot(paste0(repo.loc,"/Figures/TD/Prop_biomass_by_trophic_level.png"),prop.bm.tl.plt,base_height = 8,base_width = 11)
 
 # The biomass for the ecosystem
 bm.eco.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=bm.eco)) + 
                                 scale_y_continuous(name="Biomass",limits = c(0,NA))
-save_plot(paste0(repo.loc,"/Figures/Biomass_ns_ecosystem.png"),bm.eco.plt,base_height = 8,base_width = 11)
+save_plot(paste0(repo.loc,"/Figures/TD/Biomass_ns_ecosystem.png"),bm.eco.plt,base_height = 8,base_width = 11)
 
 
 # The 'transfer efficiency' between our trophic levels
@@ -195,13 +195,13 @@ stock.prop.bm.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=prop.bm.stock.tl,g
                   facet_wrap(~troph.cat) + guides(colour = guide_legend(nrow = 5)) + theme(legend.position = 'top') +
                   scale_y_log10(name= "Proportion of biomass",n.breaks=10) + scale_x_continuous(name="",labels = c(1990,2000,2010),breaks=c(1990,2000,2010))+
                   scale_color_manual(values=pal)
-save_plot(paste0(repo.loc,"/Figures/Prop_Biomass_ns_by_stock.png"),stock.prop.bm.plt,base_height = 8,base_width = 15)
+save_plot(paste0(repo.loc,"/Figures/TD/Prop_Biomass_ns_by_stock.png"),stock.prop.bm.plt,base_height = 8,base_width = 15)
 
 stock.bm.plt <- ggplot(bm.best) + geom_line(aes(x=Year,y=bm.stock,group = Stock,color=spec.tl),linewidth=2) + 
                      facet_wrap(~troph.cat) + scale_x_continuous(name="",labels = c(1990,2000,2010),breaks=c(1990,2000,2010))+
                      scale_y_log10(name = "Biomass",n.breaks=7) + theme(legend.position = 'top') +
                      guides(colour = guide_legend(nrow = 5)) + scale_color_manual(values=pal)
-save_plot(paste0(repo.loc,"/Figures/Biomass_ns_by_stock.png"),stock.bm.plt,base_height = 8,base_width = 15)
+save_plot(paste0(repo.loc,"/Figures/TD/Biomass_ns_by_stock.png"),stock.bm.plt,base_height = 8,base_width = 15)
 
 
 # So Model 1: You're Basic
@@ -544,16 +544,16 @@ sim.K.stocks$Species <- substr(sim.K.stocks$Stock,14,100)
 sim.stock.K.plt <- ggplot(sim.K.stocks[sim.K.stocks$sim==1,]) + geom_line(aes(x=Years,y=bm.stock,group=Species,color=Species),linewidth=2) + 
                              facet_wrap(~troph.cat) + scale_y_log10(name="Biomass") + theme(legend.position = 'top') +
                              guides(colour = guide_legend(nrow = 7))
-save_plot(filename = paste0(repo.loc,"/Figures/Simulation_stock_K.png"),sim.stock.K.plt,base_height = 8,base_width = 11)
+save_plot(filename = paste0(repo.loc,"/Figures/TD/Simulation_stock_K.png"),sim.stock.K.plt,base_height = 8,base_width = 11)
 
 sim.tl.K.plt <- ggplot(sim.troph.K) + geom_line(aes(x=Years,y=bm.tl,group=as.factor(sim),color=as.factor(sim))) + 
                       facet_wrap(~troph.cat) + theme(legend.position='none') + 
                       scale_y_log10(name="Biomass")
 
-save_plot(filename = paste0(repo.loc,"/Figures/Simulation_trophic_K.png"),sim.tl.K.plt,base_height = 8,base_width = 11)
+save_plot(filename = paste0(repo.loc,"/Figures/TD/Simulation_trophic_K.png"),sim.tl.K.plt,base_height = 8,base_width = 11)
 sim.eco.K.plt <- ggplot(sim.eco.K) + geom_line(aes(x=Years,y=bm,group=as.factor(sim),color=as.factor(sim))) +
                                  theme(legend.position = 'none')
-save_plot(filename = paste0(repo.loc,"/Figures/Simulation_eco_K.png"),sim.eco.K.plt,base_height = 8,base_width = 11)
+save_plot(filename = paste0(repo.loc,"/Figures/TD/Simulation_eco_K.png"),sim.eco.K.plt,base_height = 8,base_width = 11)
 
 # Comparing TL and ecosystem K going stock by stock with the trophic level and ecosystem K's that I originally made up
 # And it's not perfect, but I think for a first pass this work, they keep the characteristics we want in terms of
@@ -622,7 +622,7 @@ results <- NULL
 tmp <- NULL
 ts.unpack <- NULL
 
-#browser()
+
 
 for(j in 1:n.sims)
 {
@@ -634,11 +634,11 @@ for(j in 1:n.sims)
   {
     for (tl in rev(troph.levels)) {
       if (tl == 5) tl.K <- bm.sim.5[[j]][t]
-      if (tl < 5) tl.K <- Ks[[j]]$bm[Ks[[j]]$tl==tl & Ks[[j]]$Years==t]
+      if (tl < 5) tl.K.space.prop <- Ks[[j]]$k.space[Ks[[j]]$tl==tl & Ks[[j]]$Years==t]
       
       bm.stash <- NULL
       tl.stocks <- unique(bm.best$Stock[bm.best$troph.cat==tl])
-      
+     
       # Get some starting points. These are for the current year
       
       if (t == 1) tl.bm.last <- init.tl.bm[init.tl.bm$troph.cat == tl,]
@@ -669,21 +669,27 @@ for(j in 1:n.sims)
         
       }
       if (tl < 5) {
+        #browser()
         base.stock.K.tmp <- sim.K.stocks |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
         base.tl.K.tmp <- sim.troph.K |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
         
-        base.stock.K.tmp$tl.K <- tl.K
-        base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$cor.prop.bm
+        # Get the new trophic level values right
+        base.tl.K.tmp$prop.K.space <- tl.K.space.prop
+        base.tl.K.tmp$adj.K <- base.tl.K.tmp$prop.K.space * base.tl.K.tmp$bm.tl
+        base.tl.K.tmp$K.space <- base.tl.K.tmp$adj.K - base.tl.K.tmp$bm.tl
         
-        base.tl.K.tmp$prop.K.space <- tl.K/tl.bm.last$bm.tl
-        # We can then adjust the stock K's by the available K space in each stock
+        # Now get the stock right, all we have to do is multiply the bm.stock
+        # by the prop.K.space (i.e. what the proportinonal chance in the avilable K-space is)
+        base.stock.K.tmp$adj.K <- base.tl.K.tmp$prop.K.space * base.stock.K.tmp$bm.stock
+        base.stock.K.tmp$K.space <- base.stock.K.tmp$adj.K - base.stock.K.tmp$bm.stock
         
-        base.stock.K.tmp$K.space <- NA
+        #base.stock.K.tmp$bm.stock <- base.stock.K.tmp$tl.K * base.stock.K.tmp$cor.prop.bm
+        #base.stock.K.tmp$K.space <- NA
         #initial Ks are adjusted to be stock-specific based on proportions of stock biomass, then
         #the same proportion of K-space is partitioned to each of the stocks (how much a stock will actually
         #use is based on the lambdas)
-        base.stock.K.tmp$K.space <- base.stock.K.tmp$bm.stock * (base.tl.K.tmp$prop.K.space-1)
-        base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
+        #base.stock.K.tmp$K.space <- base.stock.K.tmp$bm.stock * (base.tl.K.tmp$prop.K.space-1)
+        #base.stock.K.tmp$adj.K <- base.stock.K.tmp$bm.stock + base.stock.K.tmp$K.space
       }
       base.stock.K.tmp <- left_join(base.stock.K.tmp,av.wgt,by=c("Stock","troph.cat"))
       # And now we can get a K in numbers....
@@ -724,6 +730,8 @@ for(j in 1:n.sims)
         if(s == "ICES-WGNSSK_NS4 _Scopthalmus_maximus")  l.v.h <- 0.9 # # DK Note, using 0.9 for this stock because it only declined to 66% of max in time period.
         if(s == "ICES-HAWG_NS_Ammodytes_tobianus")  l.v.h <- 0.6 # DK Note, trying to make dynamics more realistic
         cur.K <- base.stock.K.tmp$adj.K[base.stock.K.tmp$Stock ==s]
+        init.K <- base.stock.K.tmp$bm.stock[base.stock.K.tmp$Stock ==s]
+        
         res <- pop.dam(lambda = stock.lambdas,stock.K = cur.K,bm.start = bm.start, catch = catch, stock = s,
                      bm.stock = bm.ts.stock,low.vs.high = l.v.h,method="not_sample")
       
@@ -731,17 +739,39 @@ for(j in 1:n.sims)
                  Stock = s,sim= j,lambda = res$lambda,Years=t,
                  troph.cat = tl,
                  K.bm = res$K)
-      
-      bm.stash[[s]] <- res$K
+      # So we need to grab the biomass of the stock and the k-space available
+      bm.stash[[s]] <- data.frame(k.stock = res$K,bm.stock = res$tst.res,k.space = res$K - res$tst.res,K.init =init.K)
       }#end the s loop
-      # now this gets the k for the next trophic level down
-      if (tl == 5) next.tl.K <- sum(do.call('rbind', bm.stash))/sim.tl.4.to.5[[j]][t]
-      if (tl == 4) next.tl.K <- sum(do.call('rbind', bm.stash))/sim.tl.3.to.4[[j]][t]
+      
+      #browser()
+      # DK note Now what makes sense for dynamics here?? Idea for top down, we find the difference between the carrying capacity of the system 
+      # and the biomass observed in the top trophic levels.  This K-space is 'given' to the
+      # trophic level below.  If the stocks are above the carrying capacity of the top trophic level, then 
+      # that is going to result in the lower trophic level having it's carrying capacity reduced (and of course vice versa)
+      # This should cascade down through the system causing a negative feedback.
+     
+      if (tl == 5) 
+      {
+        #browser()
+        bms <- do.call('rbind', bm.stash)
+        # This way takes the proportion of k-space available (or missing) and gives it to the TL below, so if TL5 is at
+        # 90% of their K-space, that means TL4 gets a 1/0.9 'bonus' in their K space next year
+        # Doing it this way to ensure that the K's remain positive (by adding actual space you can get negatives....)
+        next.tl.K.space.prop <- 1/(sum(bms$bm.stock)/sum(bms$K.init))#/mean(sim.tl.4.to.5[[j]]) # Old way this was used to give them the tl efficicnecy, worked badly...
+      }
+      if (tl == 4) 
+      {
+        bms <- do.call('rbind', bm.stash)
+        # This way takes the proportion of k-space available (or missing) and gives it to the TL below, so if TL5 is at
+        # 90% of their K-space, that means TL4 gets a 1/0.9 'bonus' in their K space next year
+        # Doing it this way to ensure that the K's remain positive (by adding actual space you can get negatives....)
+        next.tl.K.space.prop <- 1/(sum(bms$bm.stock)/sum(bms$K.init)) # /mean(sim.tl.4.to.5[[j]]) # Old way this was used to give them the tl efficicnecy, worked badly...
+      }
       #putting the following line here assumes that all population dynamics happened instantaneously at the 
       #very beginning of the given year
       #browser()
-      if (tl > 3) Ks[[j]] <- rbind(Ks[[j]], data.frame(bm=next.tl.K, tl = tl - 1, Years = t, sim = j))
-     
+      if (tl > 3)  Ks[[j]] <- rbind(Ks[[j]], data.frame(k.space.prop=next.tl.K.space.prop, tl = tl - 1, Years = t, sim = j))
+
       #tmp[[as.character(tl)]] <- do.call("rbind", results)     
       
     } #end trophic level loop
@@ -783,46 +813,50 @@ quants <- left_join(quants,meta.dat,by = c("Stock","troph.cat"))
 
 
 # If happy save the 2 objects
-saveRDS(object = ts.final,file = paste0(repo.loc,"/Results/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
+saveRDS(object = ts.final,file = paste0(repo.loc,"/Results/TD/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
                                          "_time_series_projections.Rds"))
 
-saveRDS(object = quants,file = paste0(repo.loc,"/Results/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
+saveRDS(object = quants,file = paste0(repo.loc,"/Results/TD/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
                                        "_time_series_quantiles.Rds"))
 # 
-# saveRDS(object = r.final,file = paste0(repo.loc,"/Results/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
+# saveRDS(object = r.final,file = paste0(repo.loc,"/Results/TD/NS_projections_",n.sims,"_sims_",min(years),"_to_",max(years),
 #                                        "_r_projections.Rds"))
 
+# Number of beaks for the x-axis.
+n.breaks <- 6
 
 # Two simple plots. 
 p.sims <- ggplot(ts.final ) + geom_line(aes(x=Years,y=bm,group = sim,color=sim),alpha=0.8) +
-  facet_wrap(~Stock,scales = 'free_y') + 
-  scale_x_continuous(breaks = seq(1,50,by=49),labels=c(2015,2065)) +
+  facet_wrap(~Stock) + 
+  scale_x_continuous(name='',breaks = seq(0,n.yrs.proj,length=n.breaks)) +
   scale_y_log10(name = "Biomass") + 
   theme(legend.position = 'none') 
 
-save_plot(paste0(repo.loc,"/Figures/biomass_trends.png"),p.sims,base_height = 12,base_width = 24)
+save_plot(paste0(repo.loc,"/Figures/TD/biomass_trends.png"),p.sims,base_height = 12,base_width = 24)
 
-
-
-p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl)) + 
-  facet_wrap(~troph.cat,scales = 'free_y') +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
-  guides(colour = guide_legend(nrow = 7)) +
-  scale_x_continuous(breaks = seq(1,50,by=49),labels=c(2015,2065)) 
-  #geom_ribbon(data=quants, aes(x=Years,ymax=U.50,ymin = L.50),alpha=0.5,fill='blue',color='blue') 
-save_plot(paste0(repo.loc,"/Figures/Quantile_abundance_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
-
+#browser()
 
 colors <- distinct(bm.best, spec.tl, color)
 pal <- colors$color
 names(pal) <- colors$spec.tl
+# 
+# p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl)) + 
+#   facet_wrap(~troph.cat) +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
+#   guides(colour = guide_legend(nrow = 7)) +
+#   scale_x_continuous(breaks = seq(1,50,by=49),labels=c(2015,2065)) 
+#   #geom_ribbon(data=quants, aes(x=Years,ymax=U.50,ymin = L.50),alpha=0.5,fill='blue',color='blue') 
+# save_plot(paste0(repo.loc,"/Figures/TD/Quantile_abundance_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
+
+
+
 
 #browser()
 p.sims.quants <- ggplot(quants) + geom_line(aes(x=Years,y=med,group=Stock,color=spec.tl),linewidth=2) + 
-  facet_wrap(~troph.cat,scales = 'free_y') +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
+  facet_wrap(~troph.cat) +  scale_y_log10(name="Biomass") +   theme(legend.position = 'top') +
   guides(colour = guide_legend(nrow = 5)) + scale_color_manual(values=pal) +
-  scale_x_continuous(name="",breaks = seq(1,50,by=49),labels=c(2015,2065)) 
+  scale_x_continuous(name='',breaks = seq(0,n.yrs.proj,length=n.breaks)) 
 #geom_ribbon(data=quants, aes(x=Years,ymax=U.50,ymin = L.50),alpha=0.5,fill='blue',color='blue') 
-save_plot(paste0(repo.loc,"/Figures/Quantile_biomass_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
+save_plot(paste0(repo.loc,"/Figures/TD/Quantile_biomass_trends.png"),p.sims.quants,base_height = 8,base_width = 16)
 
 
 
