@@ -84,52 +84,13 @@ pop.dam <- function(lambda = stock.lambdas,stock.K = stock.K,bm.start=bm.start, 
   #while(is.na(lam.samp)) lam.samp <- rlnorm(1,log(lam.mn),lam.sd)
   
   # Simple way to include removals
-  
-  if(is.null(catch$er.mn)) {ex.rate = 0; ex.sd = 0}
-  if(!is.null(catch$er.mn))
-  {
-    er.mn <- catch$er.mn[]
-    if(!is.null(catch$er.sd)) er.sd <- catch$er.sd
-    if(is.null(catch$er.sd)) er.sd <- data.frame(er.sd=0,Stock =stock)
-    ex.rate = er.mn$ex.mn[er.mn$Stock == stock]
-    ex.sd = er.sd$ex.sd[er.sd$Stock == stock]
-  } # end if(!is.null(catch$er.mn))
-  if(is.null(catch$catch)) 
-  {
-    #print(ex.rate)
-    # Convert proportion to F
-    #browser()
-    ex.rate <- -log(1-ex.rate)
-    er <- rlnorm(1,log(ex.rate),ex.sd)
-    # Go from F back to proportion
-    er <- 1-exp(-er)
-    removals <- bm.start*er
-  } # end if(is.null(catch$catch)) 
-  
-  # If you have a catch estimate for the stock
-  if(!is.null(catch$catch))
-  {
-    limit.er <- 0.4
-    removals.tmp <- catch$catch$catch[catch$catch$Stock ==stock]
-    er <- removals.tmp/(bm.start+removals.tmp)
-    if(er > limit.er) 
-    {
-      removals.tmp <- limit.er*bm.start
-      er <- limit.er
-    }
-    removals <- removals.tmp
-  } # end if(!is.null(catch$catch))
-  
-  
-  #print(er)
-  
-  #lam.samp <- rlnorm(1,log(1),0.1)
-  #tst.res <- (lam.samp)*bm.start - removals
+  removals <- bm.start*catch$ex.next
+
   # We want to grow after removals because otherwise we can get negative values given exploitation was
   # calculated using the initial biomass
   tst.res <- lam.samp*(bm.start - removals)
   
  
 
-return(list(tst.res = tst.res,removals = removals,ex.rate = er,lambda = lam.samp,K = stock.K))
+return(list(tst.res = tst.res,removals = removals,ex.rate = catch$ex.next,lambda = lam.samp,K = stock.K))
 } #end function
