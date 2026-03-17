@@ -509,4 +509,8 @@ for.tune.all <- for.tune.all.res
   saveRDS(res.lambda.final,paste0(loc,"/Results/lambdas.Rds"))
   saveRDS(res.cohort.final,paste0(loc,"/Results/cohort_parameters.Rds"))
   saveRDS(res.year.final,paste0(loc,"/Results/annual_parameters.Rds"))
-
+  
+  
+  hmm <- res.lambda.final |> dplyr::group_by(stock) |> dplyr::summarise(mn = mean(lam.fish,na.rm=T),
+                                                                        med = median(lam.fish,na.rm=T),
+                                                                        max = max(lam.fish,na.rm=T))

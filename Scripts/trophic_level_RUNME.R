@@ -4,6 +4,18 @@
 # all happens within a set of 1000 ecosystems scenarios (so each ecosystems would have 1000 population dynamics simulations run on it in this scenario)
 
 
+# Three scenarios
+# 1) NO fishing, top down vs bottom up just to show what happens in our model world.
+# 2) Fishing with the following harvest control rules... our DFO ones
+# Should get a metric of landings for each stock out of this too.
+# For another day
+# 3) Some sort of degreation of primary productiving hitting TL and and implaications of this for TD and bottom up worlds with fishing
+#    as has been done historically (i.e., using the 'old' HCRs).
+# 4) Using the model to recreate what was observed in the ecosystem and see if top down or bottom up works better. If this worked then we'd be talking 
+#    about this as an assessment tool rather than a new way to explore your world.
+
+
+library(readxl)
 n.yrs.proj <- 50 # How many years into the future we are going to project the stocks
 n.sims <- 20 # The numbers of simulations to run, keeping low for testing...
 
@@ -36,10 +48,9 @@ eco.troph <- read_xlsx( paste0(dat.loc,"/Data/species_TL.xlsx"))
 # This gets some of the stock data we need.
 stocks <- ASR.long |> collapse::fsubset(Stock %in% eco.stocks)
 # Get the trophic levels for the stocks
-stocks <- merge(stocks,eco.troph,by="Stock")
-# Get the ages for the stocks
-
-
+stocks <- merge(stocks,eco.troph,by=c("Stock"))
+# Now make a short stock ID
+stocks$Stock.short <- paste(stocks$S.short,stocks$area)
 
 # Make it a list
 stock.lst <- NULL
@@ -116,11 +127,17 @@ source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down.R"))
 #Scopthalmus_maximus isn't making sense yet with the simple no trophic interaction model.
 # First guess the K for the trophic level is being used instead of the K for the stock
 
+
+#1 NEED TO FIX THE NO INTERACTION, I BROKE IT MESSNING AROUND WITH REMOVING THE TL 3 species 2 case scenario, since that isn't a thing
+possible I broke it standardizing the proportions to =1.
+#2 Need to tidy up the K stock figure in top down, it's messed up
+
 result <- trophic.mod(stocks = stock.lst,
                                   lambdas = eco.lambdas,
                                   n.yrs.proj = 50,
-                                  n.sims = 2,
+                                  n.sims = 100,
                                   exploit = exploit,
+                                  manage = NULL, 
                                   repo.loc = repo.loc)
 
 tst <- result$sim.ts[result$sim.ts$species == "Scopthalmus maximus",]

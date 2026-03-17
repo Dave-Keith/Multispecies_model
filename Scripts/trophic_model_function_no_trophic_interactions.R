@@ -77,7 +77,9 @@ for(s in  stock.eco)
                         num = num[[s]]$value,
                         trophic = tl,
                         troph.cat = as.character(floor(tl)),
-                        Species = num[[s]]$Species.y)
+                        Species = num[[s]]$Gen.Spec,
+                        Stock.short = num[[s]]$Stock.short,
+                        common = num[[s]]$common)
   #Need to clip out the years we don't have biomass data for...
   bm[[s]] <- bm[[s]] |> collapse::fsubset(Year %in% years[[s]])
   #pnm[[s]] <- 1-exp(-lambdas[[s]]$nm.opt)
@@ -92,7 +94,7 @@ bm.tst <- do.call("rbind",bm)
 # Look at the biomass and abundance in the ecosystem
 # FIX, about 1% of the catch biomasses are larger than the actual biomass observed, take a look
 # and make sure that there isn't something mis-aligned for one of the stocks.
-bm.tot <- bm.tst |> collapse::fgroup_by(Stock,Year,trophic,Species,troph.cat) |> 
+bm.tot <- bm.tst |> collapse::fgroup_by(Stock,Year,trophic,Species,troph.cat,Stock.short,common) |> 
   collapse::fsummarize(bm = sum(bm,na.rm=T), #+ sum(catch.bm,na.rm=T),
                        num = sum(num,na.rm=T))# sum(catch.num,na.rm=T),
 #catch = sum(catch.bm,na.rm=T))
@@ -119,7 +121,7 @@ tl.eco.bm$prop.num.tl <- tl.eco.bm$num.tl/tl.eco.bm$num.eco
 
 # Now we combine the ecosystem results with the stock biomass's
 bm.final <- left_join(bm.tot,tl.eco.bm,by=c("Year","troph.cat"))
-names(bm.final) <- c("Stock","Year","trophic","species","troph.cat","bm.stock","num.stock","num.tl","bm.tl",'num.eco','bm.eco',
+names(bm.final) <- c("Stock","Year","trophic","species","troph.cat","Stock.short",'common',"bm.stock","num.stock","num.tl","bm.tl",'num.eco','bm.eco',
                      'prop.bm.tl','prop.num.tl')
 # Get the proportion of the total biomass each stock accounts for
 bm.final <- bm.final |> collapse::fmutate(prop.bm.stock.eco = bm.stock/bm.eco,
@@ -314,7 +316,7 @@ tl.4.5.prop.4.5.bm <- pacf(tl.4.5.prop.bm,plot = F)
 troph.levels <- sort(unique(bm.best$troph.cat))
 
 # 
-sim.K.stock <- NULL
+sim.K.stock.lst <- NULL
 sim.Ks <- NULL
 sim.eco.bm <- NULL
 bm.trophic.Ks <- NULL
@@ -404,11 +406,9 @@ for(i in 1:n.sims)
     count =0
     for(s in tl.stocks)
     {
-      count = count+1
+      #count = count+1
       #browser()
       # Now get the time series for each stock...
-      if(count == 1 ||  n.stock.tl != 2)
-      {
         tmp.dat <- bm.best[bm.best$Stock ==s,]
         tmp.cor <- pacf(tmp.dat$prop.bm.stock.tl,plot=F) # Get the correlation, use AR1 and AR2 but no more.
         tmp.cor.lag.1 <- tmp.cor$acf[1]
@@ -436,30 +436,41 @@ for(i in 1:n.sims)
         sim.Ks[[s]] <- data.frame(Years = 1:n.yrs.proj, sim = i,
                                        Stock = s, troph.cat = tl,
                                        bm.stock = tmp.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl])
-      } # end the if(count == 1 ||  n.stock.tl != 2)
-      # If there are only 2 stocks in a trophic level, then the second stock get the rest of the trophic levels biomass
-      
-      if(count == 2 & n.stock.tl == 2) 
-      {
-        sim.Ks[[s]] <-  data.frame(Years = 1:n.yrs.proj, sim=i,
-                                   Stock = s, troph.cat = as.numeric(tl),
-                                   bm.stock = (1-tmp.prop.bm)*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl])
-      } # end the case of just 2 stocks
+    
+
     } # end the stocks loop
+    
+    tl.stock.list <- as.data.frame(do.call('rbind',sim.Ks[tl.stocks]))
+    tl.stock.list <- tl.stock.list |> dplyr::group_by(Years) |> dplyr::mutate(cor.prop.bm = prop.bm.stock/sum(prop.bm.stock))
+    # Now remake the sim.Ks thing so it works with the below... clunky yes...
+    for(s in tl.stocks) 
+    {
+      tl.stock.list.tmp <- tl.stock.list[tl.stock.list$Stock ==s,]
+      sim.Ks[[s]] <- data.frame(Years = 1:n.yrs.proj, sim = i,
+                                Stock = s, troph.cat = tl,
+                                prop.bm.stock = tl.stock.list.tmp$prop.bm.stock,
+                                cor.prop.bm = tl.stock.list.tmp$cor.prop.bm,
+                                bm.stock = tl.stock.list.tmp$cor.prop.bm*bm.trophic.Ks[[i]]$bm.tl[bm.trophic.Ks[[i]]$troph.cat==tl])
+    }
   } # end the trophic level loop
-  sim.K.stock[[i]] <- do.call("rbind",sim.Ks)
+  sim.K.stock.lst[[i]] <- do.call("rbind",sim.Ks)
   
 } # end the simulation loop
-
-sim.K.stocks <- do.call("rbind",sim.K.stock)
+sim.K.stocks.tmp <- do.call("rbind",sim.K.stock.lst)
 sim.troph.K <- do.call("rbind",bm.trophic.Ks)
 sim.eco.K <- do.call("rbind",sim.eco.bm)
+
+# Get the meta data into the K stuff
+sim.K.stocks <- left_join(sim.K.stocks.tmp,meta.dat,by=c("Stock",'troph.cat'))
+
 # Wrap up the K time series for each simulation
-sim.K.stocks$Species <- substr(sim.K.stocks$Stock,14,100)
-sim.stock.K.plt <- ggplot(sim.K.stocks[sim.K.stocks$sim==1,]) + geom_line(aes(x=Years,y=bm.stock,group=Species,color=Species),linewidth=2) + 
-                             facet_wrap(~troph.cat) + scale_y_log10(name="Biomass") + theme(legend.position = 'top') +
-                             guides(colour = guide_legend(nrow = 7))
-save_plot(filename = paste0(repo.loc,"/Figures/NI/Simulation_stock_K.png"),sim.stock.K.plt,base_height = 8,base_width = 11)
+#sim.K.stocks$Species <- substr(sim.K.stocks$Stock,14,100)
+sim.stock.K.plt <- ggplot(sim.K.stocks) + geom_line(aes(x=Years+max(bm.best$Year),y=bm.stock,group=sim),linewidth=2,alpha=0.2) + 
+                                            geom_line(data=bm.best,aes(x=Year,y=bm.stock)) +
+                                            facet_wrap(~troph.cat+Stock.short,scales='free_y') + scale_x_continuous(name='')+
+                                            scale_y_continuous(name="Biomass") + theme(legend.position = 'none') #+
+
+save_plot(filename = paste0(repo.loc,"/Figures/NI/Simulation_stock_K.png"),sim.stock.K.plt,base_height = 10,base_width = 20)
 
 sim.tl.K.plt <- ggplot(sim.troph.K) + geom_line(aes(x=Years,y=bm.tl,group=as.factor(sim),color=as.factor(sim))) + 
                       facet_wrap(~troph.cat) + theme(legend.position='none') + 
