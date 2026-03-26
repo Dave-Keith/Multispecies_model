@@ -305,7 +305,7 @@ save(years.tmp,pnm.tmp,waa.tmp,ages.tmp,rem.tmp,mx.tmp,NE.tmp,vpa.tmp,mr.tmp,am.
   ########################## Now run the tuning sims
   #
   
-  load(file = paste0(loc,"/Results/model_inputs_all_ages.Rdata"))
+  load(file = paste0(loc,"/Results/model_inputs.Rdata"))
   
   for.tune.all.res <- NULL
   for.tune.summary <- NULL
@@ -365,16 +365,7 @@ save(years.tmp,pnm.tmp,waa.tmp,ages.tmp,rem.tmp,mx.tmp,NE.tmp,vpa.tmp,mr.tmp,am.
   
   
   
-  tst <- NULL
-  tst1 <- NULL
-  for(i in names(for.tune.all.res))
-  {
-    if(i != "ICES HAWG_NS-IV 3a,7d_Clupea_harengus") tst[[i]] <- for.tune.all.res[[i]]
-    if(i != "ICES HAWG_NS-IV 3a,7d_Clupea_harengus") tst1[[i]] <- for.tune.summary[[i]]
-  }
   
-  for.tune.all.res <- tst
-  for.tune.summary <- tst1
   #DFO_2J3KL_Gadus_morhua -27.7984654 2.815738e+08
   #ICES-WGCSE_IS6a-7b-7j_Dicentrarchus _labrax -21.6050608
   # ICES-WGCSE_IS6a-7b-7j_Dicentrarchus _labrax Lotka error
