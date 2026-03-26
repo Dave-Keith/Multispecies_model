@@ -38,7 +38,7 @@ options(scipen = 999)
 funs <- c("https://raw.githubusercontent.com/dave-keith/ICM/main/Scripts/functions/simple_Lotka_r.r",
           "https://raw.githubusercontent.com/dave-keith/ICM/main/Scripts/functions/simple_forward_sim.r",
           "https://raw.githubusercontent.com/dave-keith/ICM/main/Scripts/functions/forward_project.r",
-          "https://raw.githubusercontent.com/dave-keith/Multispecies_model/main/Scripts/NS_caatch_function.R"
+          "https://raw.githubusercontent.com/dave-keith/Multispecies_model/main/Scripts/NS_catch_function.R"
 )
 # Now run through a quick loop to load each one, just be sure that your working directory is read/write!
 for(fun in funs) 

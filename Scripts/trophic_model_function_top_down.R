@@ -22,7 +22,7 @@ trophic.mod<-function(dat=bm.best,n.yrs.proj = 50, n.sims = 20,
   
 {
   
-  set.seed(1)
+set.seed(1)
   
 
 library(tidyverse)
@@ -647,7 +647,7 @@ for(ss in stock.eco)
     }
     # If we wanted the relative exploitation but didn't set the er, then we are setting the  exploitation to the long term median exploitation observed
     # and adjusting that up or down using the relative er. This with a relative er of 1 is the same er as the NULL scenario
-
+    
     if(is.na(as.numeric(ms$er))) {
       ex.dat[[ss]]$fm.mn <- ms$relative.er * (1-exp(-match.fun(ms$er.fun)(bm.n.er.hist$er,na.rm=T)))
       ex.dat[[ss]]$er.mn <- -log(1-ex.dat[[ss]]$fm.mn)

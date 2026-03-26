@@ -148,7 +148,7 @@ tl.com.bm$prop.num.tl <- tl.com.bm$num.tl/tl.com.bm$num.eco
 
 bm.final <- left_join(bm.tot,tl.com.bm,by=c("Year","troph.cat"))
 names(bm.final) <- c("Stock","Year","trophic","Species","troph.cat","Stock.short",'common',"bm.stock","num.stock","catch",'lam.no.fish',
-                     'lam.fish',"lam.fish.ltr","lam.no.fish.ltr","num.tl","bm.tl",'num.eco','bm.eco','prop.bm.tl','prop.num.tl')
+                     'lam.fish',"lam.fish.ltr","lam.no.fish.ltr","num.tl","bm.tl",'num.eco','bm.eco','prop.max','prop.bm.tl','prop.num.tl')
 # Get the proportion of the total biomass each stock accounts for
 bm.final <- bm.final |> collapse::fmutate(prop.bm.stock.eco = (bm.stock+catch)/bm.eco,
                                           prop.num.stock.eco = num.stock/num.eco,
@@ -253,13 +253,13 @@ ggplot(bm.best,aes(x=bm.stock,y=lam.fish.ltr)) + geom_point() + facet_wrap(~Stoc
 
 # Let's try to lay the groundwork for some HDR's given the historical patterns...
 manage.strat <- read_xlsx(paste0(repo.loc,"/Data/management_strategy.xlsx"),sheet="strategy")
-
-#manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 3
-manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 2
-manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 2
 manage.strat$use.hcr <- F
-manage.strat$er <- 0
-manage.strat$rp.fun <- "min"
+#manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 3
+manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 0.5
+#manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 0.5
+
+#manage.strat$er <- 0
+#manage.strat$rp.fun <- "min"
 # here are the models we have
 
 #source(paste0(repo.loc,"/Scripts/trophic_model_function.R"))
@@ -271,8 +271,8 @@ manage.strat$rp.fun <- "min"
 source(paste0(repo.loc,"/Scripts/Population_dynamics_function.R"))
 source(paste0(repo.loc,"/Scripts/NS_catch_function.R"))
 
-source(paste0(repo.loc,"/Scripts/trophic_model_function_no_trophic_interactions.R")) # working ok.
-source(paste0(repo.loc,"/Scripts/trophic_model_function_bottom_up.R")) # 
+#source(paste0(repo.loc,"/Scripts/trophic_model_function_no_trophic_interactions.R")) # working ok.
+#source(paste0(repo.loc,"/Scripts/trophic_model_function_bottom_up.R")) # 
 source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down.R"))
 
 
@@ -291,10 +291,10 @@ source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down.R"))
 #"bp_resample"
 result <- trophic.mod(dat = bm.best,
                                   n.yrs.proj = 50,
-                                  n.sims = 40,
+                                  n.sims = 500,
                                   manage = manage.strat, 
                                   repo.loc = repo.loc,
-                                  method = 'log_linear',
+                                  method = 'bp_log_normal',
                                   mod.pred = lm.pred.list)
 
 
