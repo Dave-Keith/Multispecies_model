@@ -998,6 +998,16 @@ names(sim.pool.stocks) <- c("Years","sim","Stock","troph.cat","prop.tl.pool", "c
 names(sim.troph.pool) <- c("Years","sim","pool.tl","troph.cat","pool.com","prop.com.pool")
 names(sim.com.pool) <- c("com.pool","Years","sim")
 
+save(sim.quantiles = quants,
+          sim.ts = ts.final,
+          past.bm = bm.best,
+          sim.pool.stocks = sim.pool.stocks,
+          sim.troph.pool = sim.troph.pool,
+          sim.com.pool = sim.com.pool,
+          Pool.realized = Pool.real
+          ,file = paste0(repo.loc,"/Results/TD/All_results_",n.sims,"_sims_",min(years),"_to_",max(years),
+                          "_time_series_quantiles.RData"))
+
 return(list(sim.quantiles = quants,
             sim.ts = ts.final,
             past.bm = bm.best,

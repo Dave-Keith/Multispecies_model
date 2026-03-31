@@ -900,6 +900,15 @@ names(sim.pool.stocks) <- c("Years","sim","Stock","troph.cat","prop.tl.pool", "c
 names(sim.troph.pool) <- c("Years","sim","pool.tl","troph.cat","pool.com","prop.com.pool")
 names(sim.com.pool) <- c("com.pool","Years","sim")
 
+save(sim.quantiles = quants,
+     sim.ts = ts.final,
+     past.bm = bm.best,
+     sim.pool.stocks = sim.pool.stocks,
+     sim.troph.pool = sim.troph.pool,
+     sim.com.pool = sim.com.pool,
+     file = paste0(repo.loc,"/Results/NI/All_results_",n.sims,"_sims_",min(years),"_to_",max(years),
+                    "_time_series_quantiles.RData"))
+
 # ggplot(bm.best) + geom_line(aes(x=Year,y=prop.bm.stock.tl,group = Stock,color=spec.tl),linewidth=2) + 
 #   facet_wrap(~troph.cat) + guides(colour = guide_legend(nrow = 5)) + theme(legend.position = 'top') +
 #   scale_y_log10(name= "Proportion of biomass",n.breaks=10) + scale_x_continuous(name="",labels = c(1990,2000,2010),breaks=c(1990,2000,2010))+

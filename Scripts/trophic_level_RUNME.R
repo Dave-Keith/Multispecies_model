@@ -271,9 +271,9 @@ manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 0.5
 source(paste0(repo.loc,"/Scripts/Population_dynamics_function.R"))
 source(paste0(repo.loc,"/Scripts/NS_catch_function.R"))
 
-#source(paste0(repo.loc,"/Scripts/trophic_model_function_no_trophic_interactions.R")) # working ok.
+source(paste0(repo.loc,"/Scripts/trophic_model_function_no_trophic_interactions.R")) # working ok.
 #source(paste0(repo.loc,"/Scripts/trophic_model_function_bottom_up.R")) # 
-source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down.R"))
+#source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down.R"))
 
 
 # There are things wrong with the top down function at the moment, fix it. I think the real

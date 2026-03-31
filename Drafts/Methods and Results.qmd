@@ -1,0 +1,92 @@
+---
+title: "MSM on NS analysis"
+format: docx
+editor: visual
+---
+
+## Quarto
+
+# Results
+
+## Status Quo Fishing
+
+In the status quo scenario each of the three dynamics models (1: Competition 2: Predator-competition 3: Prey-competition) provided relatively stable predictions of biomass and removals over the next 50 years. The community biomass pool and removals were something for each of the three dynamics models. The biomass pool and removals for the trophic groups... for each of the three dynamics models.
+
+The species responses were also realative stable, with the median of the simulations stabilizing for all stocks and the vast majority of the stocks falling within historic biomass and removals ranges.
+
+## Bottom Up Simulation Experiment
+
+Reducing the fishing mortality on the bottom trophic species in the community did what?
+
+## Top Down Simulation Experiment
+
+Reducing the fishing mortality on the top predators species in the community did what?
+
+```{r}
+#| echo: false
+library(collapse)
+library(tidyverse)
+library(dplyr)
+repo <- "D:/Github/Multispecies_model/"
+```
+
+
+```{r }
+#| echo: false
+#| include: false
+#| cache: false
+
+# Now bring in all the data, rename it, and stitch it together as necessary
+# NI historical 
+load(paste0(repo,"results/NI/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.ni.hist <- data.frame(quants,model = "No Interaction",sceanrio = "Historic Exploitation")
+sim.com.ni.hist <- data.frame(sim.com.pool,model = "No Interaction",sceanrio = "Historic Exploitation")
+sim.stock.ni.hist <- data.frame(sim.pool.stocks,model = "No Interaction",sceanrio = "Historic Exploitation")
+sim.troph.ni.hist <- data.frame(sim.troph.pool,model = "No Interaction",sceanrio = "Historic Exploitation")
+ts.ni.hist <- data.frame(ts.final,model = "No Interaction",sceanrio = "Historic Exploitation")
+load(paste0(repo,"results/TD/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.td.hist <- data.frame(quants,model = "Top Down",sceanrio = "Historic Exploitation")
+sim.com.td.hist <- data.frame(sim.com.pool,model = "Top Down",sceanrio = "Historic Exploitation")
+sim.stock.td.hist <- data.frame(sim.pool.stocks,model = "Top Down",sceanrio = "Historic Exploitation")
+sim.troph.td.hist <- data.frame(sim.troph.pool,model = "Top Down",sceanrio = "Historic Exploitation")
+ts.td.hist <- data.frame(ts.final,model = "Top Down",sceanrio = "Historic Exploitation")
+real.pool.td.hist <- data.frame(Pool.real,model = "Top Down",sceanrio = "Historic Exploitation")
+load(paste0(repo,"results/BU/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.bu.hist <- data.frame(quants,model = "Bottom Up",sceanrio = "Historic Exploitation")
+sim.com.bu.hist <- data.frame(sim.com.pool,model = "Bottom Up",sceanrio = "Historic Exploitation")
+sim.stock.bu.hist <- data.frame(sim.pool.stocks,model = "Bottom Up",sceanrio = "Historic Exploitation")
+sim.troph.bu.hist <- data.frame(sim.troph.pool,model = "Bottom Up",sceanrio = "Historic Exploitation")
+ts.bu.hist <- data.frame(ts.final,model = "Bottom Up",sceanrio = "Historic Exploitation")
+real.pool.bu.hist <- data.frame(Pool.real,model = "Bottom Up",sceanrio = "Historic Exploitation")
+load(paste0(repo,"results/BU/Low_TL_exploit_0.5_of_historic/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.bu.low.sims <- data.frame(quants,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
+sim.com.bu.low.sims <- data.frame(sim.com.pool,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
+sim.stock.bu.low.sims <- data.frame(sim.pool.stocks,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
+sim.troph.bu.low.sims <- data.frame(sim.troph.pool,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
+ts.bu.low.sims <- data.frame(ts.final,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
+real.pool.bu.low.sims <- data.frame(Pool.real,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
+load(paste0(repo,"results/TD/High_TL_exploit_0.5_of_historic/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.td.low.sims <- data.frame(quants,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+sim.com.td.low.sims <- data.frame(sim.com.pool,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+sim.stock.td.low.sims <- data.frame(sim.pool.stocks,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+sim.troph.td.low.sims <- data.frame(sim.troph.pool,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+ts.td.low.sims <- data.frame(ts.final,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+real.pool.td.low.sims <- data.frame(Pool.real,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+
+# Now stitch things together
+quants.all <- rbind(quant.ni.hist,quant.bu.hist,quant.td.hist,quant.bu.low.sims,quant.td.low.sims)
+sim.com.all <- rbind(sim.com.ni.hist,sim.com.bu.hist,sim.com.td.hist,sim.com.bu.low.sims,sim.com.td.low.sims)
+sim.stock.all <- rbind(sim.stock.ni.hist,sim.stock.bu.hist,sim.stock.td.hist,sim.stock.bu.low.sims,sim.stock.td.low.sims)
+sim.troph.all <- rbind(sim.troph.ni.hist,sim.troph.bu.hist,sim.troph.td.hist,sim.troph.bu.low.sims,sim.troph.td.low.sims)
+ts.all <- rbind(ts.ni.hist,ts.bu.hist,ts.td.hist,ts.bu.low.sims,ts.td.low.sims)
+real.pool.all <- rbind(real.pool.bu.hist,real.pool.td.hist,real.pool.bu.low.sims,real.pool.td.low.sims)
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
