@@ -193,7 +193,7 @@ save_plot(paste0(repo.loc,"/Figures/Historic_Biomass_ns_ecosystem.png"),bm.com.p
 lm.pred.list <- NULL
 for(s in eco.stocks)
 {
-  tmp <- bm.final[bm.final$Stock == s,]
+  tmp <- bm.best[bm.best$Stock == s,]
   tmp$bm.prop <- tmp$bm.stock/max(tmp$bm.stock,na.rm=T)
   #mod.tmp <- glm(lam.no.fish.ltr ~ bm.prop,data = tmp,family = gaussian(link = "log"))
   mod.tmp <- lm(log(lam.no.fish.ltr) ~ bm.prop,data = tmp)
@@ -203,10 +203,11 @@ for(s in eco.stocks)
   {
     print(summary(mod.tmp)$sigma/sqrt(nrow(tmp)))
     pred.tmp$lambda <- exp(predict(mod.tmp,newdata = pred.tmp))
-    pred.tmp$sd <- summary(mod.tmp)$sigma#/sqrt(nrow(tmp))
+    pred.tmp$sd <- summary(mod.tmp)$sigma/sqrt(nrow(tmp))
   } else {
-    pred.tmp$lambda <- exp(mean(log(tmp$lam.no.fish.ltr),na.rm=T)) 
-    pred.tmp$sd <- sd(log(tmp$lam.no.fish.ltr),na.rm=T)#/sqrt(nrow(tmp))
+    print(s)
+    pred.tmp$lambda <- median(tmp$lam.fish.ltr,na.rm=T)
+    pred.tmp$sd <- sd(log(tmp$lam.fish.ltr),na.rm=T)#/sqrt(nrow(tmp))
     } #end else and if statement
   # Shouldn't be necessary, but seems it is to make sure I get a match in the loops...
   pred.tmp$bm.prop <- round(pred.tmp$bm.prop,digits=2)
@@ -253,9 +254,11 @@ ggplot(bm.best,aes(x=bm.stock,y=lam.fish.ltr)) + geom_point() + facet_wrap(~Stoc
 
 # Let's try to lay the groundwork for some HDR's given the historical patterns...
 manage.strat <- read_xlsx(paste0(repo.loc,"/Data/management_strategy.xlsx"),sheet="strategy")
-manage.strat$use.hcr <- F
+#manage.strat$use.hcr <- T
+
+
 #manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 3
-manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 0.5
+#manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 0.5
 #manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 0.5
 
 #manage.strat$er <- 0
@@ -271,9 +274,10 @@ manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 0.5
 source(paste0(repo.loc,"/Scripts/Population_dynamics_function.R"))
 source(paste0(repo.loc,"/Scripts/NS_catch_function.R"))
 
-source(paste0(repo.loc,"/Scripts/trophic_model_function_no_trophic_interactions.R")) # working ok.
-#source(paste0(repo.loc,"/Scripts/trophic_model_function_bottom_up.R")) # 
+#source(paste0(repo.loc,"/Scripts/trophic_model_function_no_trophic_interactions.R")) # working ok.
+source(paste0(repo.loc,"/Scripts/trophic_model_function_bottom_up_multi_test.R")) # 
 #source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down.R"))
+source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down_mutli_test.R"))
 
 
 # There are things wrong with the top down function at the moment, fix it. I think the real
@@ -347,7 +351,7 @@ ggplot(ks) + geom_line(aes(x=Years,y=,group = sim,color=sim),alpha=0.8) +
 
 ggplot(dd) + geom_point(aes(x=bm,y=lambda),alpha=0.8,color='grey') + 
   facet_wrap(~interaction(Stock.short, troph.cat , sep = " TC: ",drop=T),scales='free') +
-  geom_point(data=bm.best,aes(x=bm.stock,y=lam.fish.ltr),color='black') +
+  geom_point(data=bm.best,aes(x=bm.stock,y=lam.no.fish.ltr),color='black') +
   #scale_x_continuous(name='',breaks = few.breaks) +
   scale_y_log10(name = "Lambda") + scale_x_log10(name = "biomass") +
   theme(legend.position = 'none') 

@@ -4,89 +4,673 @@ format: docx
 editor: visual
 ---
 
-## Quarto
-
-# Results
-
-## Status Quo Fishing
-
-In the status quo scenario each of the three dynamics models (1: Competition 2: Predator-competition 3: Prey-competition) provided relatively stable predictions of biomass and removals over the next 50 years. The community biomass pool and removals were something for each of the three dynamics models. The biomass pool and removals for the trophic groups... for each of the three dynamics models.
-
-The species responses were also realative stable, with the median of the simulations stabilizing for all stocks and the vast majority of the stocks falling within historic biomass and removals ranges.
-
-## Bottom Up Simulation Experiment
-
-Reducing the fishing mortality on the bottom trophic species in the community did what?
-
-## Top Down Simulation Experiment
-
-Reducing the fishing mortality on the top predators species in the community did what?
-
-```{r}
+```{r preamble}
 #| echo: false
+#| include: false
+#| warning: false
+#| 
 library(collapse)
 library(tidyverse)
 library(dplyr)
+library(ggthemes)
+library(cowplot)
 repo <- "D:/Github/Multispecies_model/"
+n.sims <- 500
+theme_set(theme_few())
+options(scipen = 9999)
 ```
 
+```{r load}
+#| echo: false
+#| include: false
+#| warning: false
+#| cache: true
+
+# Now bring in all the data, rename it, and stitch it together as necessary
+# NI historical 
+# load(paste0(repo,"results/NI/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+# quant.ni.hist <- data.frame(quants,model = "No Interaction",scenario = "Historic Exploitation")
+# sim.com.ni.hist <- data.frame(sim.com.pool,model = "No Interaction",scenario = "Historic Exploitation")
+# sim.stock.ni.hist <- data.frame(sim.pool.stocks,model = "No Interaction",scenario = "Historic Exploitation")
+# sim.troph.ni.hist <- data.frame(sim.troph.pool,model = "No Interaction",scenario = "Historic Exploitation")
+#ts.ni.hist <- data.frame(ts.final,model = "No Interaction",scenario = "Historic Exploitation")
+load(paste0(repo,"results/TD/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.td.hist <- data.frame(quants,model = "Top Down",scenario = "Historic Exploitation")
+sim.com.td.hist <- data.frame(sim.com.pool,model = "Top Down",scenario = "Historic Exploitation")
+sim.stock.td.hist <- data.frame(sim.pool.stocks,model = "Top Down",scenario = "Historic Exploitation")
+sim.troph.td.hist <- data.frame(sim.troph.pool,model = "Top Down",scenario = "Historic Exploitation")
+ts.td.hist <- data.frame(ts.final,model = "Top Down",scenario = "Historic Exploitation")
+real.pool.td.hist <- data.frame(Pool.real,model = "Top Down",scenario = "Historic Exploitation")
+load(paste0(repo,"results/BU/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.bu.hist <- data.frame(quants,model = "Bottom Up",scenario = "Historic Exploitation")
+sim.com.bu.hist <- data.frame(sim.com.pool,model = "Bottom Up",scenario = "Historic Exploitation")
+sim.stock.bu.hist <- data.frame(sim.pool.stocks,model = "Bottom Up",scenario = "Historic Exploitation")
+sim.troph.bu.hist <- data.frame(sim.troph.pool,model = "Bottom Up",scenario = "Historic Exploitation")
+ts.bu.hist <- data.frame(ts.final,model = "Bottom Up",scenario = "Historic Exploitation")
+real.pool.bu.hist <- data.frame(Pool.real,model = "Bottom Up",scenario = "Historic Exploitation")
+load(paste0(repo,"results/BU/Low_TL_exploit_0.5_of_historic/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.bu.low.sims <- data.frame(quants,model = "Bottom Up",scenario = "Reduce Exploitation on Low")
+sim.com.bu.low.sims <- data.frame(sim.com.pool,model = "Bottom Up",scenario = "Reduce Exploitation on Low")
+sim.stock.bu.low.sims <- data.frame(sim.pool.stocks,model = "Bottom Up",scenario = "Reduce Exploitation on Low")
+sim.troph.bu.low.sims <- data.frame(sim.troph.pool,model = "Bottom Up",scenario = "Reduce Exploitation on Low")
+ts.bu.low.sims <- data.frame(ts.final,model = "Bottom Up",scenario = "Reduce Exploitation on Low")
+real.pool.bu.low.sims <- data.frame(Pool.real,model = "Bottom Up",scenario = "Reduce Exploitation on Low")
+load(paste0(repo,"results/TD/High_TL_exploit_0.5_of_historic/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
+quant.td.low.sims <- data.frame(quants,model = "Top Down",scenario = "Reduce Exploitation on High")
+sim.com.td.low.sims <- data.frame(sim.com.pool,model = "Top Down",scenario = "Reduce Exploitation on High")
+sim.stock.td.low.sims <- data.frame(sim.pool.stocks,model = "Top Down",scenario = "Reduce Exploitation on High")
+sim.troph.td.low.sims <- data.frame(sim.troph.pool,model = "Top Down",scenario = "Reduce Exploitation on High")
+ts.td.low.sims <- data.frame(ts.final,model = "Top Down",scenario = "Reduce Exploitation on High")
+real.pool.td.low.sims <- data.frame(Pool.real,model = "Top Down",scenario = "Reduce Exploitation on High")
+
+# Now stitch things together
+quants.all <- rbind(quant.bu.hist,quant.td.hist,quant.bu.low.sims,quant.td.low.sims)
+sim.com.all <- rbind(sim.com.bu.hist,sim.com.td.hist,sim.com.bu.low.sims,sim.com.td.low.sims)
+sim.stock.all <- rbind(sim.stock.bu.hist,sim.stock.td.hist,sim.stock.bu.low.sims,sim.stock.td.low.sims)
+sim.troph.all <- rbind(sim.troph.bu.hist,sim.troph.td.hist,sim.troph.bu.low.sims,sim.troph.td.low.sims)
+ts.all <- rbind(ts.bu.hist,ts.td.hist,ts.bu.low.sims,ts.td.low.sims)
+real.pool.all <- rbind(real.pool.bu.hist,real.pool.td.hist,real.pool.bu.low.sims,real.pool.td.low.sims)
+
+```
+
+```{r results}
+#| echo: false
+#| include: false
+#| warning: false
+
+year.range <- 39:49 # last 10 years with all information
+
+# Summarize at the community level
+# This is getting the overall community summary
+com.sims <-  ts.all |> collapse::fgroup_by(Years,model,scenario,sim) |> collapse::fsummarize(rem =sum(removals,na.rm=T),
+                                                                                              bm = sum(bm,na.rm=T))
+com.sims.summary <-  com.sims |> collapse::fgroup_by(Years,model,scenario) |> collapse::fsummarize(rem =median(rem,na.rm=T),
+                                                                                            bm = median(bm,na.rm=T))
+com.sims.summary$er <- com.sims.summary$rem/com.sims.summary$bm
+com.sims.summary$mod.scen <- paste0(com.sims.summary$model," ", com.sims.summary$scenario)
+
+# How above bimoass for each stock relative to historic biomass
+# This is getting some trophic level summaries
+troph.sims <-  ts.all |> collapse::fgroup_by(Years,troph.cat,model,scenario,sim) |> collapse::fsummarize(rem =sum(removals,na.rm=T),
+                                                                                               bm = sum(bm,na.rm=T))
+
+troph.sims.summary <- troph.sims |> collapse::fgroup_by(Years,troph.cat,model,scenario) |> collapse::fsummarize(rem =median(rem,na.rm=T),
+                                                                                               bm = median(bm,na.rm=T))
+troph.sims.summary$mod.scen <- paste0(troph.sims.summary$model," ", troph.sims.summary$scenario)
+# The historic time series of removals
+hist.rem <- bm.best |> collapse::fgroup_by(Year,troph.cat) |> collapse::fsummarize(tl.rem = sum(catch,na.rm=T),
+                                                                                   bm.tl = sum(bm.stock,na.rm=T))
+hist.rem.med.4.plt <- hist.rem |> collapse::fgroup_by(troph.cat) |> collapse::fsummarise(med.rem = median(tl.rem,na.rm=T),
+                                                                                        med.bm = median(bm.tl,na.rm=T))
+
+hist.com.rem <- bm.best |> collapse::fgroup_by(Year) |> collapse::fsummarize(com.rem = sum(catch,na.rm=T))
+
+com.rem.hist.last.20 <- round(median(hist.com.rem$com.rem[hist.com.rem$Year >=2003])/1000,digits = 0)
+com.rem.td.he <- round(median(com.sims.summary$rem[com.sims.summary$Years %in% c(39:49) & com.sims.summary$scenario == "Historic Exploitation" & 
+                                          com.sims.summary$model == "Top Down"])/1000,digits=0)
+
+
+com.er.by.sim.exp <- com.sims.summary |> collapse::fsubset(Years %in% c(39:49)) |> collapse::fgroup_by(model,scenario,mod.scen) |> collapse::fsummarise(med.er = round(median(er,na.rm=T),digits =2))
+
+
+com.er.td.he <- round(median(com.sims.summary$er[com.sims.summary$Years %in% c(39:49) & com.sims.summary$scenario == "Historic Exploitation" & 
+                                          com.sims.summary$model == "Top Down"]),digits=2)
+
+# Working on this now....
+# Differences between historic and revised cases
+
+com.end.summaries <- com.sims |> collapse::fsubset(Years %in% year.range) |> 
+                                 collapse::fgroup_by(model,scenario) |>
+                                 collapse::fsummarise(med.rem = median(rem,na.rm=T),
+                                                      med.bm = median(bm,na.rm=T))
+
+# So a 50% decline in the low results in an overall decline of 25% in removals.
+com.bu.rem.pc <- round(100*(com.end.summaries$med.rem[com.end.summaries$model == "Bottom Up" & com.end.summaries$scenario == "Reduce Exploitation on Low"] -
+                  com.end.summaries$med.rem[com.end.summaries$model == "Bottom Up" & com.end.summaries$scenario == "Historic Exploitation"]) /
+                  com.end.summaries$med.rem[com.end.summaries$model == "Bottom Up" & com.end.summaries$scenario == "Historic Exploitation"],digits=0)
+# In terms of biomass... it leads to a 9% bump in biomass
+com.bu.bm.pc <- round(100*(com.end.summaries$med.bm[com.end.summaries$model == "Bottom Up" & com.end.summaries$scenario == "Reduce Exploitation on Low"] -
+                  com.end.summaries$med.bm[com.end.summaries$model == "Bottom Up" & com.end.summaries$scenario == "Historic Exploitation"]) /
+                  com.end.summaries$med.bm[com.end.summaries$model == "Bottom Up" & com.end.summaries$scenario == "Historic Exploitation"],digits=0)
+
+# In the top down scenario we see...
+com.td.rem.pc <- round(100*(com.end.summaries$med.rem[com.end.summaries$model == "Top Down" & com.end.summaries$scenario == "Reduce Exploitation on High"] -
+                  com.end.summaries$med.rem[com.end.summaries$model == "Top Down" & com.end.summaries$scenario == "Historic Exploitation"]) /
+                  com.end.summaries$med.rem[com.end.summaries$model == "Top Down" & com.end.summaries$scenario == "Historic Exploitation"],digits=1)
+# In terms of biomass... it leads to a 9% bump in biomass
+com.td.bm.pc <- round(100*(com.end.summaries$med.bm[com.end.summaries$model == "Top Down" & com.end.summaries$scenario == "Reduce Exploitation on High"] -
+                  com.end.summaries$med.bm[com.end.summaries$model == "Top Down" & com.end.summaries$scenario == "Historic Exploitation"]) /
+                  com.end.summaries$med.bm[com.end.summaries$model == "Top Down" & com.end.summaries$scenario == "Historic Exploitation"],digits=1)
+
+# Now do the same things by trophic level
+
+troph.summary <- troph.sims |> collapse::fsubset(Years %in% year.range) |> 
+                               collapse::fgroup_by(troph.cat,model,scenario) |> collapse::fsummarize(rem =median(rem,na.rm=T),
+                                                                                                     bm = median(bm,na.rm=T))
+troph.summary$level <- paste(troph.summary$troph.cat,troph.summary$model,troph.summary$scenario)
+
+tl.low.bu.hist <- troph.summary[troph.summary$level == "Low Bottom Up Historic Exploitation",]
+tl.low.bu.red <-troph.summary[troph.summary$level == "Low Bottom Up Reduce Exploitation on Low",]
+tl.low.td.hist <-troph.summary[troph.summary$level == "Low Top Down Historic Exploitation",]
+tl.low.td.red <-troph.summary[troph.summary$level == "Low Top Down Reduce Exploitation on High",]
+tl.med.bu.hist <-troph.summary[troph.summary$level == "Medium Bottom Up Historic Exploitation",]
+tl.med.bu.red <-troph.summary[troph.summary$level == "Medium Bottom Up Reduce Exploitation on Low",]
+tl.med.td.hist <-troph.summary[troph.summary$level == "Medium Top Down Historic Exploitation",]
+tl.med.td.red <-troph.summary[troph.summary$level == "Medium Top Down Reduce Exploitation on High",]
+tl.high.bu.hist <-troph.summary[troph.summary$level == "High Bottom Up Historic Exploitation",]
+tl.high.bu.red <-troph.summary[troph.summary$level == "High Bottom Up Reduce Exploitation on Low",]
+tl.high.td.hist <-troph.summary[troph.summary$level == "High Top Down Historic Exploitation",]
+tl.high.td.red <-troph.summary[troph.summary$level == "High Top Down Reduce Exploitation on High",]
+
+# Bottom up effects
+tl.low.bu.rem.pc <- round(100*(tl.low.bu.red$rem - tl.low.bu.hist$rem) /  tl.low.bu.hist$rem,digits =0)
+tl.med.bu.rem.pc <- round(100*(tl.med.bu.red$rem - tl.med.bu.hist$rem) /  tl.med.bu.hist$rem,digits =0)
+tl.high.bu.rem.pc <- round(100*(tl.high.bu.red$rem - tl.high.bu.hist$rem) /  tl.high.bu.hist$rem,digits =0)
+# Top down effects
+tl.low.td.rem.pc <- round(100*(tl.low.td.red$rem - tl.low.td.hist$rem) /  tl.low.td.hist$rem,digits =0)
+tl.med.td.rem.pc <- round(100*(tl.med.td.red$rem - tl.med.td.hist$rem) /  tl.med.td.hist$rem,digits =0)
+tl.high.td.rem.pc <- round(100*(tl.high.td.red$rem - tl.high.td.hist$rem) /  tl.high.td.hist$rem,digits =0)
+# comparing scenarios
+ts.tmp <- ts.all
+ts.tmp$scenario[ts.tmp$scenario != "Historic Exploitation"] <- "Reduced Exploitation"
+# percent differences
+pct.diff.rem <- ts.tmp %>% filter(Years %in% year.range) %>%                                   # last 10 years
+                           group_by(Stock.short, model, scenario,troph.cat) %>%
+                           summarise(median_removals = median(removals, na.rm = TRUE),.groups = "drop") %>%
+                           pivot_wider(names_from = scenario,values_from = median_removals) %>%
+                           mutate(pct.diff = round(100 * (`Reduced Exploitation` - `Historic Exploitation`) / `Historic Exploitation`,digits=1))
+
+pct.diff.rem <- pct.diff.rem %>% arrange(troph.cat, Stock.short) %>%
+                                  mutate(SS = factor(Stock.short, levels = unique(Stock.short)))
+
+pct.diff.bm <- ts.tmp %>% filter(Years %in% year.range) %>%                                   # last 10 years
+                          group_by(Stock.short, model, scenario,troph.cat) %>%
+                          summarise(median_biomass = median(bm,na.rm=T),.groups = "drop") %>%
+                          pivot_wider(names_from = scenario, values_from = median_biomass) %>%
+                          mutate(pct.diff = round(100 * (`Reduced Exploitation` - `Historic Exploitation`) / `Historic Exploitation`,digits=1))
+
+pct.diff.bm <- pct.diff.bm %>% arrange(troph.cat, Stock.short) %>%
+                               mutate(SS = factor(Stock.short, levels = unique(Stock.short)))
+
+# Summarize the changes in  removals for the two experiments
+tl.low.bu.rem.specs <- pct.diff.rem |> collapse::fsubset(troph.cat == "Low" & model == "Bottom Up") |> 
+                                       collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.med.bu.rem.specs <- pct.diff.rem |> collapse::fsubset(troph.cat == "Medium" & model == "Bottom Up") |> 
+                                       collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.high.bu.rem.specs <- pct.diff.rem |> collapse::fsubset(troph.cat == "High" & model == "Bottom Up") |> 
+                                        collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.low.td.rem.specs <- pct.diff.rem |>  collapse::fsubset(troph.cat == "Low" & model == "Top Down") |> 
+                                        collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.med.td.rem.specs <- pct.diff.rem |> collapse::fsubset(troph.cat == "Medium" & model == "Top Down") |> 
+                                       collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.high.td.rem.specs <- pct.diff.rem |> collapse::fsubset(troph.cat == "High" & model == "Top Down") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+# Now the biomass
+tl.low.bu.bm.specs <- pct.diff.bm |> collapse::fsubset(troph.cat == "Low" & model == "Bottom Up") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.med.bu.bm.specs <- pct.diff.bm |> collapse::fsubset(troph.cat == "Medium" & model == "Bottom Up") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.high.bu.bm.specs <- pct.diff.bm |> collapse::fsubset(troph.cat == "High" & model == "Bottom Up") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.low.td.bm.specs <- pct.diff.bm |> collapse::fsubset(troph.cat == "Low" & model == "Top Down") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.med.td.bm.specs <- pct.diff.bm |> collapse::fsubset(troph.cat == "Medium" & model == "Top Down") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+tl.high.td.bm.specs <- pct.diff.bm |> collapse::fsubset(troph.cat == "High" & model == "Top Down") |> 
+                                   collapse::fsummarise(min.pct = min(pct.diff,na.rm=T),
+                                                        max.pct = max(pct.diff,na.rm=T))
+
+# Plots
+com.bm.plt <- ggplot(com.sims.summary[com.sims.summary$Years != 50,]) + 
+                          geom_line(aes(y=bm,x=Years+max(bm.best$Year)+1,group = mod.scen,color=mod.scen),linewidth=2) +
+                          geom_line(data=bm.best,aes(x=Year,y=bm.eco)) +
+                          geom_hline(yintercept = median(bm.best$bm.eco)) +
+                          scale_y_log10(name='Commmunity biomass (tonnes)') + scale_x_continuous("")
+
+save_plot(paste0(repo,"Figures/Community_biomass.png"),com.bm.plt,base_height = 6,base_width = 12)
+
+com.rem.plt <-ggplot(com.sims.summary[com.sims.summary$Years != 50,]) + 
+                          geom_line(aes(y=rem,x=Years+max(bm.best$Year)+1,group = mod.scen,color=mod.scen),linewidth=2) +
+                          geom_line(data=hist.com.rem,aes(x=Year,y=com.rem)) +
+                          geom_hline(yintercept = median(hist.com.rem$com.rem)) +
+                          scale_y_continuous(name='Commmunity removals (tonnes)') + scale_x_continuous("")
+
+save_plot(paste0(repo,"Figures/Community_removals.png"),com.rem.plt,base_height = 6,base_width = 12)
+
+
+troph.rem.plt <- ggplot(troph.sims.summary[troph.sims.summary$Years != 50,]) + 
+                          geom_line(aes(y=rem,x=Years+max(bm.best$Year)+1,group = mod.scen,color=mod.scen),linewidth=2) +
+                          geom_line(data=hist.rem,aes(x=Year,y=tl.rem)) +
+                          facet_wrap(~troph.cat) + 
+                          geom_hline(data = hist.rem.med.4.plt, aes(yintercept = med.rem)) +
+                          scale_y_log10(name='Trophic level removals (tonnes)') + scale_x_continuous("")
+
+save_plot(paste0(repo,"Figures/trophic_removals.png"),troph.rem.plt,base_height = 6,base_width = 12)
+
+
+troph.bm.plt <- ggplot(troph.sims.summary[troph.sims.summary$Years != 50,]) + 
+                          geom_line(aes(y=bm,x=Years+max(bm.best$Year)+1,group = mod.scen,color=mod.scen),linewidth=2) +
+                          geom_line(data=hist.rem,aes(x=Year,y=bm.tl)) +
+                          facet_wrap(~troph.cat) + 
+                          geom_hline(data = hist.rem.med.4.plt, aes(yintercept = med.bm)) +
+                          scale_y_log10(name='Trophic level biomass (tonnes)') + scale_x_continuous("")
+
+save_plot(paste0(repo,"Figures/trophic_biomass.png"),troph.bm.plt,base_height = 6,base_width = 12)
+
+pd.rem.plt <- ggplot(pct.diff.rem, aes(x = pct.diff, y = SS, fill = troph.cat)) + 
+                          geom_col() +
+                          facet_wrap(~ model) +
+                          labs(x = "Percent difference in removals",
+                               y = NULL,
+                               fill = "Trophic category") + 
+                          geom_vline(xintercept=0,linewidth=1.5,color='grey')
+
+save_plot(paste0(repo,"Figures/Percent_change_removals_species.png"),pd.rem.plt,base_height = 6,base_width = 12)
+
+pd.bm.plt <- ggplot(pct.diff.bm, aes(x = pct.diff, y = SS, fill = troph.cat)) +
+                          geom_col() +
+                          facet_wrap(~ model) +
+                          labs(x = "Percent difference in biomass",
+                               y = NULL,
+                               fill = "Trophic category") + 
+                          geom_vline(xintercept=0,linewidth=1.5,color='grey')
+
+save_plot(paste0(repo,"Figures/Percent_change_biomass_species.png"),pd.bm.plt,base_height = 6,base_width = 12)
+
+
+```
+
+# Methods
+
+# Results
+
+## Community Scale
+
+At the community scale, all of the simulations provided relatively stable predictions of biomass and removals over the final 20 years of the simulation, this follows a brief initialization period of approximately 4 years (@fig-com-bm). This initialization period is a consequence of the fishing behavior changing in the initial year of the simulations, the magnitude of this initialization period is higher for the top down models (@fig-com-bm). At the community scale both biomass and removals were within the observed historic ranges for both models and the two simulation experiments (@fig-com-bm and @fig-com-rem). The simulations from the top-down models tended to have above average community biomass estimates, while the median biomass from the *BU-low* simulations came the closest to aligning with the historic median overall biomass observed in the community. The reduced exploitation simulations resulted in larger community biomass's than the historical exploitation simulations, though the top-down models this difference was much smaller over the final decade of the simulations than the difference between the bottom-up models. After the initialization period, the biomass for both of the top-down models slowly increased through time, plateauing after approximately 20 years, while the bottom up models achieved stability immediately following the initialization period (@fig-com-bm).
+
+At the community scale the total removals were below the long term median for the community (@fig-com-rem), but were more similar to the median removals observed over the most recent two decades (`r com.rem.hist.last.20` thousand tonnes) for the simulations except the simulation in which the removals from the *Low* trophic category were reduced by 50%. For example, the median removals from the top down historic fishing simulation were approximately 9% below (`r com.rem.td.he` thousand tonnes over the final decade of the simulations; @fig-com-rem) the median removals over the last two decades. The exploitation rate at the community scale was lowest for the *BU-Low* simulation (`r com.er.by.sim.exp$med.er[2]`; @fig-com-rem). The exploitation rate for the other three simulations ranged from `r com.er.by.sim.exp$med.er[1]` - `r com.er.by.sim.exp$med.er[3]` (@fig-com-rem).
+
+## Trophic Category Scale
+
+Similar to the community trends, the median biomass's from the simulations generally fall within the historic biomass ranges for each trophic categories (@fig-troph-bm). Here the differences between the models become more evident, with the *Bottom up* models having lower biomass estimates in the *Medium and High* TC when compared to the *Top-down* models (@fig-troph-bm).
+
+The *BU-Hist* simulations resulted in the lowest biomass estimates across the 4 simulations. The *BU-low* simulation resulted in higher biomass for the *Low* category than the *BU-Hist* simulations (@fig-troph-bm). As a result, this increased availability of *Low* TC biomass resulted in an increase in the biomass of the *Medium* TC, this was then propagated to the *High* TC which also experienced an increase in biomass.
+
+The *TD-Hist* simulation resulted in the biomass being above average for the *Medium* and *High* TCs, while it resulted in the lowest biomass in the *Low* TC (@fig-troph-bm). The *TD-low* had a lower biomass estimate in the *Medium* TC, but a higher biomass estimates for the *Low* and *High* TCs than the *TD-Hist* simulations (@fig-troph-bm). The increase in the *High* TC resulted in the decline to the *Medium* TC biomass. The decline in the *Medium* TC biomass facilitated an increase in the biomass of the *Low* TC due to the increased biomass pool available to the *Low* TC (@fig-troph-bm).
+
+The removals from the Bottom-up models resulted in below average removals for all the TCs (@fig-troph-rem). The Top-down models had removals near the historical medians in the *Low* and *Medium* TC, while the *TD-Hist* simulations resulted in above average removals in the *High* TC (@fig-troph-rem). The *BU-low* simulations resulted in an increase in the removals for both the *Medium* and *High* TCs when compared to the *BU-Hist* simulations. In addition, the removals withing the *Low* TC slowly increased in the early years of the *BU-low* simulations as the fishery was able to take advantage of the increase in the size of the biomass in the *Low* TC due to the reduced fishing pressure (@fig-troph-rem). The *TD-low* simulations did not have a similar impact on the removals in the *High* category as the removals stabilized at a low value in the simulations. In the *Medium* TC, the *TD-low* simulations also resulted in a decline in the removals, this is tied to the general decline in biomass experience in this TC, while in the *Low* TC removals increased until 2040, after which they were similar to the removals from the *BU-Hist* simulations (@fig-troph-rem).
+
+## Stock Scale
+
+The median stock biomass's from the simulations stocks generally remained within the range of historically observed biomass's over the duration of simulated time period across the simulations (@fig-bu-hist-quants - @fig-td-low-raw). Several stocks which start the simulations at relatively low or high biomass's experience rapid biomass shifts, generally towards the median of the time series during the initialization period (approximately 2-5 years), the dynamics of the stocks results in relatively stable median and 50% CIs after approximately the first 15 years of the simulations across the simulations. The individual underlying simulation time series' are highly dynamic, as indicated by the width of the 50% CIs for the stocks (@fig-bu-hist-quants - @fig-td-low-raw). In the *TD-Hist* simulations, the *P. virens* stock had median biomass estimates which were above the maximum observed biomass for this stock since 1993 (@fig-td-hist-quants). Otherwise, the median biomass trends for all the stock in the *Historic exploitation* simulations were within the ranges observed for these stocks (@fig-bu-hist-quants & @fig-td-hist-quants).
+
+## Reduced Exploitation on *Low* TC
+
+The simulations from the Bottom Up model in which the exploitation rate on the *Low* TC was reduced by 50% were summarized using the final 10 years of simulation data and were compared to the results from the historic simulations (@fig-pc-sp-bm & @fig-pc-sp-rem; left panels). For this simulation the percent change in biomass relative to the historic simulations for the individual stocks in the *Low* TC ranged from `r tl.low.bu.bm.specs$min.pct`% to `r tl.low.bu.bm.specs$max.pct`% (@fig-pc-sp-bm left panel). The realized removals in the *Low* TC were between `r tl.low.bu.rem.specs$min.pct`% and `r  tl.low.bu.rem.specs$max.pct`% of the historic removals (@fig-pc-sp-rem left panel). The biomass of all of the stocks in the *Medium* and *High* TC increased; these increases ranged from `r tl.med.bu.bm.specs$min.pct`% to `r tl.med.bu.bm.specs$max.pct`% for the *Medium* TC and from `r tl.high.bu.bm.specs$min.pct`% to `r tl.high.bu.bm.specs$max.pct`% for the *High* TC (@fig-pc-sp-bm left panel). This also resulted in an increase in the removals for the *Medium* and *High* TC stocks; the increases in removals ranged from `r tl.med.bu.rem.specs$min.pct`% to `r tl.med.bu.rem.specs$max.pct`% for the *Medium* TC and from `r tl.high.bu.rem.specs$min.pct`% to `r tl.high.bu.rem.specs$max.pct`% (@fig-pc-sp-rem left panel).
+
+## Reduced Exploitation on *High* TC
+
+The simulations from the Top down model in which the exploitation rate on the *High* TC was reduced by 50% resulted are summarized using the final 10 years of simulation data and are compared to the results from the historic simulations (@fig-pc-sp-bm & @fig-pc-sp-rem; right panels). For this simulation the percent change in biomass relative to the historic simulations for the individual stocks in the *High* TC increased between `r tl.high.td.bm.specs$min.pct`% and `r tl.high.td.bm.specs$max.pct`% (@fig-pc-sp-bm right panel). The removals in the *High* TC declined from between `r tl.high.td.rem.specs$min.pct`% and `r tl.high.td.rem.specs$max.pct`% when compared to the historic biomass removal simulation. The biomass of all the stocks in the *Medium* TC declined, these declines ranged from from `r tl.med.td.bm.specs$min.pct`% to `r tl.med.td.bm.specs$max.pct`%. This also resulted in a decline in the removals for the *Medium* TC ranging from `r tl.med.td.rem.specs$min.pct`% to `r tl.med.td.rem.specs$max.pct`% for these stocks. The biomass of the *Low* TC stock increased between `r tl.low.td.bm.specs$min.pct`% and `r tl.low.td.bm.specs$max.pct`% (@fig-pc-sp-bm). The realized removals in the *Low* TC were between `r tl.low.td.rem.specs$min.pct`% and `r  tl.low.td.rem.specs$max.pct`% higher than the removals in the associated historical simulations (@fig-pc-sp-rem).
+
+# Discussion
+
+This Multispecies model framework is able to provide predictions of future stock dynamics for the selected North Sea community which align with historically observed dynamics under similar fishing pressures. The model does so by relying on historically observed patterns in this community. The Bottom Up simulations tended to provide biomass estimates for the community that were below the log term median for the community, while the Top Down simulations tended towards higher biomass estimates, these were more in line with the biomass observed in recent years for the *Medium* and *Top* TCs. As a result of the lower biomass estimates in the Bottom Up model, the simulations using this methodology tended to estimate the total removals to be below the historically observed averages, but generally in line with the removals observed in recent years. The Top Down model estimated removals for the system that were similar to the historically observed median removals overall. At the stock level, both models resulted in dynamics that broadly aligned with the historically observed biomass and removals trends for most of the stocks
+
+Simulations were also undertaken with No Interactions between the trophic categories, the results of these simulations tended to align more closely to the TD simulations
+
+The MSM framework provides a simple data driven framework for developing customized multispecies models. The framework only requires an understanding of historic population trends, an estimate of fisheries removals, and the relative biomass of the stocks within a community. The framework is flexible enough so that the user can modify the community dynamics to suite their needs, the user can have interactions within a group (e.g., competition), between groups (e.g., predator-prey), or with multiple groups interacting in more complex ways than developed here. While this framework is not a replacement for traditional assessment models, this could be utilized as a strategic tool to explore the potential of different management actions on a broader community and as a way to better understand the dynamics of species not currently assessed.
+
+# Figures
+
+```{r  echo=F}
+#| label: fig-com-bm
+#| fig.cap: "Median biomass (tonnes) time series for the community included in this analysis. The black line is the historical observed community biomass (tonnes)"
+knitr::include_graphics(paste0(repo,"Figures/Community_biomass.png"))
+```
+
+```{r  echo=F}
+#| label: fig-com-rem
+#| fig.cap: "Median removals (tonnes) time series for the community included in this analysis. The black line is the historical observed community removals (tonnes)"
+knitr::include_graphics(paste0(repo,"Figures/Community_removals.png"))
+```
+
+```{r  echo=F}
+#| label: fig-troph-bm
+#| fig.cap: "meidan biomass (tonnes) time series for each trophic cateogry included in this analysis. The black line is the historical observed community biomass (tonnes) for each of the trophic categories included in this analysis"
+knitr::include_graphics(paste0(repo,"Figures/trophic_biomass.png"))
+```
+
+```{r  echo=F}
+#| label: fig-troph-rem
+#| fig.cap: "Median removals (tonnes) time series for each of the trophic categories included in this analysis. The black line is the historical observed  removals (tonnes) for each of the trophic categories included in this analysis"
+knitr::include_graphics(paste0(repo,"Figures/trophic_removals.png"))
+```
+
+```{r  echo=F}
+#| label: fig-pc-sp-bm
+#| fig.cap: "The percentage change of the median biomass for each stock using the final 10 years of the simulations comparing the reduced exploitation simulations to the biomass observed in the historic exploitation simulations. A positive value indicated an increase from the historic exploitation simulation baseline."
+knitr::include_graphics(paste0(repo,"Figures/Percent_change_biomass_species.png"))
+```
+
+```{r  echo=F}
+#| label: fig-pc-sp-rem
+#| fig.cap: "The percentage change of the median removals for each stock using the final 10 years of the simulations comparing the reduced exploitation simulations to the removals observed in the historic exploitation simulations. A positive value indicated an increase from the historic exploitation simulation baseline."
+knitr::include_graphics(paste0(repo,"Figures/Percent_change_removals_species.png"))
+```
 
 ```{r }
 #| echo: false
 #| include: false
-#| cache: false
+#| warning: false
+#| cache: true
+# Lambda's by stock, not breaking out between simulations, hopefully.
+# This takes a long time to run given all the points, so I'll comment it out
+lam.plt <- ggplot(ts.all) + geom_point(aes(x=bm/K.bm,y=lambda),size=0.1,alpha=0.01,color="grey") + 
+                            facet_wrap(~interaction(Stock.short, troph.cat , sep = " TC: ",drop=T),scales='free') +
+                            geom_point(data= bm.best, aes(x=prop.max,y=lam.no.fish.ltr),size=0.5) + 
+                            geom_hline(yintercept =1,color='firebrick2',linetype='dashed') +
+                            scale_x_log10(name = "Proportion of Biomass Pool") +
+                            scale_y_log10(name = "Lambda")
 
-# Now bring in all the data, rename it, and stitch it together as necessary
-# NI historical 
-load(paste0(repo,"results/NI/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
-quant.ni.hist <- data.frame(quants,model = "No Interaction",sceanrio = "Historic Exploitation")
-sim.com.ni.hist <- data.frame(sim.com.pool,model = "No Interaction",sceanrio = "Historic Exploitation")
-sim.stock.ni.hist <- data.frame(sim.pool.stocks,model = "No Interaction",sceanrio = "Historic Exploitation")
-sim.troph.ni.hist <- data.frame(sim.troph.pool,model = "No Interaction",sceanrio = "Historic Exploitation")
-ts.ni.hist <- data.frame(ts.final,model = "No Interaction",sceanrio = "Historic Exploitation")
-load(paste0(repo,"results/TD/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
-quant.td.hist <- data.frame(quants,model = "Top Down",sceanrio = "Historic Exploitation")
-sim.com.td.hist <- data.frame(sim.com.pool,model = "Top Down",sceanrio = "Historic Exploitation")
-sim.stock.td.hist <- data.frame(sim.pool.stocks,model = "Top Down",sceanrio = "Historic Exploitation")
-sim.troph.td.hist <- data.frame(sim.troph.pool,model = "Top Down",sceanrio = "Historic Exploitation")
-ts.td.hist <- data.frame(ts.final,model = "Top Down",sceanrio = "Historic Exploitation")
-real.pool.td.hist <- data.frame(Pool.real,model = "Top Down",sceanrio = "Historic Exploitation")
-load(paste0(repo,"results/BU/Historic Exploitation/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
-quant.bu.hist <- data.frame(quants,model = "Bottom Up",sceanrio = "Historic Exploitation")
-sim.com.bu.hist <- data.frame(sim.com.pool,model = "Bottom Up",sceanrio = "Historic Exploitation")
-sim.stock.bu.hist <- data.frame(sim.pool.stocks,model = "Bottom Up",sceanrio = "Historic Exploitation")
-sim.troph.bu.hist <- data.frame(sim.troph.pool,model = "Bottom Up",sceanrio = "Historic Exploitation")
-ts.bu.hist <- data.frame(ts.final,model = "Bottom Up",sceanrio = "Historic Exploitation")
-real.pool.bu.hist <- data.frame(Pool.real,model = "Bottom Up",sceanrio = "Historic Exploitation")
-load(paste0(repo,"results/BU/Low_TL_exploit_0.5_of_historic/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
-quant.bu.low.sims <- data.frame(quants,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
-sim.com.bu.low.sims <- data.frame(sim.com.pool,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
-sim.stock.bu.low.sims <- data.frame(sim.pool.stocks,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
-sim.troph.bu.low.sims <- data.frame(sim.troph.pool,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
-ts.bu.low.sims <- data.frame(ts.final,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
-real.pool.bu.low.sims <- data.frame(Pool.real,model = "Bottom Up",sceanrio = "Reduce Exploitation on Low")
-load(paste0(repo,"results/TD/High_TL_exploit_0.5_of_historic/All_results_500_sims_2023_to_2072_time_series_quantiles.RData"))
-quant.td.low.sims <- data.frame(quants,model = "Top Down",sceanrio = "Reduce Exploitation on High")
-sim.com.td.low.sims <- data.frame(sim.com.pool,model = "Top Down",sceanrio = "Reduce Exploitation on High")
-sim.stock.td.low.sims <- data.frame(sim.pool.stocks,model = "Top Down",sceanrio = "Reduce Exploitation on High")
-sim.troph.td.low.sims <- data.frame(sim.troph.pool,model = "Top Down",sceanrio = "Reduce Exploitation on High")
-ts.td.low.sims <- data.frame(ts.final,model = "Top Down",sceanrio = "Reduce Exploitation on High")
-real.pool.td.low.sims <- data.frame(Pool.real,model = "Top Down",sceanrio = "Reduce Exploitation on High")
+save_plot(paste0(repo,"Figures/lambbda_vs_k_by_stock.png"),lam.plt,base_height = 6,base_width = 12)
 
-# Now stitch things together
-quants.all <- rbind(quant.ni.hist,quant.bu.hist,quant.td.hist,quant.bu.low.sims,quant.td.low.sims)
-sim.com.all <- rbind(sim.com.ni.hist,sim.com.bu.hist,sim.com.td.hist,sim.com.bu.low.sims,sim.com.td.low.sims)
-sim.stock.all <- rbind(sim.stock.ni.hist,sim.stock.bu.hist,sim.stock.td.hist,sim.stock.bu.low.sims,sim.stock.td.low.sims)
-sim.troph.all <- rbind(sim.troph.ni.hist,sim.troph.bu.hist,sim.troph.td.hist,sim.troph.bu.low.sims,sim.troph.td.low.sims)
-ts.all <- rbind(ts.ni.hist,ts.bu.hist,ts.td.hist,ts.bu.low.sims,ts.td.low.sims)
-real.pool.all <- rbind(real.pool.bu.hist,real.pool.td.hist,real.pool.bu.low.sims,real.pool.td.low.sims)
+# Some pool figures for the Supplemental
+# First for the Bottom Up Historic sims.
+# Aligns the levels properly for the plots to come...
+
+real.pool.bu.hist$troph.cat <- factor(real.pool.bu.hist$troph.cat, levels = c("Low","Medium","High"))
+real.pool.bu.low.sims$troph.cat <- factor(real.pool.bu.low.sims$troph.cat, levels = c("Low","Medium","High"))
+real.pool.td.hist$troph.cat <- factor(real.pool.td.hist$troph.cat, levels = c("Low","Medium","High"))
+real.pool.td.low.sims$troph.cat <- factor(real.pool.td.low.sims$troph.cat, levels = c("Low","Medium","High"))
+
+
+pool.real.bu.hist.plt <- ggplot(real.pool.bu.hist) + geom_line(aes(x=Years+2024,y=pool.real,color=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat, sep = " TC: ",drop=T),scales='free') +
+                                              geom_line(data=bm.best,aes(x=Year,y=bm.stock)) +theme(legend.position = 'none') + xlab("")
+
+save_plot(paste0(repo,"Figures/BU/Historic Exploitation/realized_pool_size.png"),pool.real.bu.hist.plt,base_height = 6,base_width = 12)
+
+pool.space.bu.hist.plt <- ggplot(real.pool.bu.hist) + geom_line(aes(x=Years+2024,y=pool.space/pool.init.stock,group=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat, sep = " TC: ",drop=T)) +
+                                              scale_y_continuous(name = "Proportional change in pool space size")+
+                                              geom_hline(yintercept = 0,color='grey',linetype='dashed')+
+                                              theme(legend.position = 'none')+ xlab("")
+                            #geom_line(data=bm.best,aes(x=Year,y=bm.stock)) 
+save_plot(paste0(repo,"Figures/BU/Historic Exploitation/proportional_change_in_pool_space.png"),pool.space.bu.hist.plt,base_height = 6,base_width = 12)
+
+# Bottom up reduced exploit sims
+pool.real.bu.low.plt <- ggplot(real.pool.bu.low.sims) + geom_line(aes(x=Years+2024,y=pool.real,color=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat , sep = " TC: ",drop=T),scales='free') +
+                                              geom_line(data=bm.best,aes(x=Year,y=bm.stock)) +theme(legend.position = 'none')+ xlab("")
+
+save_plot(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/realized_pool_size.png"),pool.real.bu.low.plt,base_height = 6,base_width = 12)
+
+pool.space.bu.low.plt <- ggplot(real.pool.bu.low.sims) + geom_line(aes(x=Years+2024,y=pool.space/pool.init.stock,group=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat , sep = " TC: ",drop=T)) +
+                                              scale_y_continuous(name = "Proportional change in pool space size")+
+                                              geom_hline(yintercept = 0,color='grey',linetype='dashed')+
+                                              theme(legend.position = 'none')+ xlab("")
+                            #geom_line(data=bm.best,aes(x=Year,y=bm.stock)) 
+save_plot(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/proportional_change_in_pool_space.png"),pool.space.bu.low.plt,base_height = 6,base_width = 12)
+
+# Now do the Top Down's
+pool.real.td.hist.plt <- ggplot(real.pool.td.hist) + geom_line(aes(x=Years+2024,y=pool.real,color=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat , sep = " TC: ",drop=T),scales='free') +
+                                              geom_line(data=bm.best,aes(x=Year,y=bm.stock)) +theme(legend.position = 'none')+ xlab("")
+
+save_plot(paste0(repo,"Figures/TD/Historic Exploitation/realized_pool_size.png"),pool.real.td.hist.plt,base_height = 6,base_width = 12)
+
+pool.space.td.hist.plt <- ggplot(real.pool.td.hist) + geom_line(aes(x=Years+2024,y=pool.space/pool.init.stock,group=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat, sep = " TC: ",drop=T)) +
+                                              scale_y_continuous(name = "Proportional change in pool space size")+
+                                              geom_hline(yintercept = 0,color='grey',linetype='dashed')+
+                                              theme(legend.position = 'none')+ xlab("")
+                            #geom_line(data=bm.best,aes(x=Year,y=bm.stock)) 
+save_plot(paste0(repo,"Figures/TD/Historic Exploitation/proportional_change_in_pool_space.png"),pool.space.td.hist.plt,base_height = 6,base_width = 12)
+
+# Bottom up reduced exploit sims
+pool.real.td.low.plt <- ggplot(real.pool.td.low.sims) + geom_line(aes(x=Years+2024,y=pool.real,color=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat , sep = " TC: ",drop=T),scales='free') +
+                                              geom_line(data=bm.best,aes(x=Year,y=bm.stock)) +theme(legend.position = 'none')+ xlab("")
+
+save_plot(paste0(repo,"Figures/TD/High_TL_exploit_0.5_of_historic/realized_pool_size.png"),pool.real.td.low.plt,base_height = 6,base_width = 12)
+
+pool.space.td.low.plt <- ggplot(real.pool.td.low.sims) + geom_line(aes(x=Years+2024,y=pool.space/pool.init.stock,group=sim),size=0.1,alpha=0.1) +
+                                              facet_wrap(~interaction(Stock.short,troph.cat , sep = " TC: ",drop=T),scales='free') +
+                                              scale_y_continuous(name = "Proportional change in pool space size")+
+                                              geom_hline(yintercept = 0,color='grey',linetype='dashed')+
+                                              theme(legend.position = 'none')+ xlab("")
+                            #geom_line(data=bm.best,aes(x=Year,y=bm.stock)) 
+save_plot(paste0(repo,"Figures/TD/High_TL_exploit_0.5_of_historic/proportional_change_in_pool_space.png"),pool.space.td.low.plt,base_height = 6,base_width = 12)
 ```
 
-You can add options to executable code like this
+# Supplemental Figures
 
-```{r}
-#| echo: false
-2 * 2
+## Biomass by Species
+
+```{r  echo=F}
+#| label: fig-bu-hist-quants
+#| fig.cap: "Median biomass(tonnes) and 50% Confidence Interval for each stock in the *BU-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/Quantile_biomass_trends_by_stock.png"))
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r  echo=F}
+#| label: fig-bu-low-quants
+#| fig.cap: "Median biomass(tonnes) and 50% Confidence Interval for each stock in the *BU-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/Quantile_biomass_trends_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-quants
+#| fig.cap: "Median biomass(tonnes) and 50% Confidence Interval for each stock in the *TD-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/Quantile_biomass_trends_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-quants
+#| fig.cap: "Median biomass(tonnes) and 50% Confidence Interval for each stock in the *TD-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Low_TL_exploit_0.5_of_historic/Quantile_biomass_trends_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-hist-raw
+#| fig.cap: "Raw biomass(tonnes) for each of the 500 simulations for each stock in the *BU-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/raw_biomass_trends.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-low-raw
+#| fig.cap: "Raw biomass(tonnes) for each of the 500 simulations for each stock in the *BU-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/raw_biomass_trends.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-raw
+#| fig.cap: "Raw biomass(tonnes) for each of the 500 simulations for each stock each stock in the *TD-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/raw_biomass_trends.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-raw
+#| fig.cap: "Raw biomass(tonnes) for each of the 500 simulations for each stock in the *TD-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Low_TL_exploit_0.5_of_historic/raw_removals_trends.png"))
+```
+
+## Removals by Species
+
+```{r  echo=F}
+#| label: fig-bu-hist-quants-rem
+#| fig.cap: "Median removals(tonnes) and 50% Confidence Interval for each stock in the *BU-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-low-quants-rem
+#| fig.cap: "Median removals(tonnes) and 50% Confidence Interval for each stock in the *BU-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-quants-rem
+#| fig.cap: "Median removals(tonnes) and 50% Confidence Interval for each stock in the *TD-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-quants-rem
+#| fig.cap: "Median removals(tonnes) and 50% Confidence Interval for each stock in the *TD-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Low_TL_exploit_0.5_of_historic/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-hist-raw-rem
+#| fig.cap: "Raw removals(tonnes) for each of the 500 simulations for each stock in the *BU-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/raw_removals_trends.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-low-raw-rem
+#| fig.cap: "Raw removals(tonnes) for each of the 500 simulations for each stock in the *BU-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/raw_removals_trends.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-raw-rem
+#| fig.cap: "Raw removals(tonnes) for each of the 500 simulations for each stock each stock in the *TD-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/raw_removals_trends.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-raw-rem
+#| fig.cap: "Raw removals(tonnes) for each of the 500 simulations for each stock in the *TD-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Low_TL_exploit_0.5_of_historic/raw_removals_trends.png"))
+```
+
+## Exploitation Rate by species
+
+```{r  echo=F}
+#| label: fig-bu-hist-quants-er
+#| fig.cap: "Median exploitation rate (proportional) and 50% Confidence Interval for each stock in the *BU-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-low-quants-er
+#| fig.cap: "Median exploitation rate (proportional) and 50% Confidence Interval for each stock in the *BU-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-quants-er
+#| fig.cap: "Median exploitation rate (proportional) and 50% Confidence Interval for each stock in the *TD-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-quants-er
+#| fig.cap: "Median exploitation rate (proportional) and 50% Confidence Interval for each stock in the *TD-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Low_TL_exploit_0.5_of_historic/Quantile_removals_by_stock.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-hist-raw-er
+#| fig.cap: "Raw exploitation rate(proportional) for each of the 500 simulations for each stock in the *BU-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/raw_exploitation_rates.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-low-raw-er
+#| fig.cap: "Raw exploitation rate(proportional) for each of the 500 simulations for each stock in the *BU-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/raw_exploitation_rates.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-raw-er
+#| fig.cap: "Raw exploitation rate(proportional) for each of the 500 simulations for each stock each stock in the *TD-Hist* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/raw_exploitation_rates.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-raw-er
+#| fig.cap: "Raw exploitation rate(proportional) for each of the 500 simulations for each stock in the *TD-Low* simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Low_TL_exploit_0.5_of_historic/raw_exploitation_rates.png"))
+```
+
+## Biomass Pools by Stock
+
+<!-- BU Historic exploit sims -->
+
+```{r  echo=F}
+#| label: fig-bu-hist-real-pool
+#| fig.cap: "Realized pool space (tonnes) for each stock in the *BU-Hist* simulations. The black line on the left represents the historic biomass of the stock. The lines on the right of the figure are the realized pool spaces for the simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/realized_pool_size.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-hist-prop-pool-space
+#| fig.cap: "Proportional change in pool space from the original simulated values for the *BU-Hist* simulations. The lines represtent the values used in each year for each of the simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Historic Exploitation/proportional_change_in_pool_space.png"))
+```
+
+<!-- BU low exploit sims -->
+
+```{r  echo=F}
+#| label: fig-bu-low-real-pool
+#| fig.cap: "Realized pool space (tonnes) for each stock in the *BU-Low* simulations. The black line on the left represents the historic biomass of the stock. The lines on the right of the figure are the realized pool spaces for the simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/realized_pool_size.png"))
+```
+
+```{r  echo=F}
+#| label: fig-bu-low-prop-pool-space
+#| fig.cap: "Proportional change in pool space from the original simulated values for the *BU-Low* simulations. The lines represtent the values used in each year for each of the simulations"
+knitr::include_graphics(paste0(repo,"Figures/BU/Low_TL_exploit_0.5_of_historic/proportional_change_in_pool_space.png"))
+```
+
+<!-- TD Historic exploit sims -->
+
+```{r  echo=F}
+#| label: fig-td-hist-real-pool
+#| fig.cap: "Realized pool space (tonnes) for each stock in the *TD-Hist* simulations. The black line on the left represents the historic biomass of the stock. The lines on the right of the figure are the realized pool spaces for the simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/realized_pool_size.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-hist-prop-pool-space
+#| fig.cap: "Proportional change in pool space from the original simulated values for the *TD-Hist* simulations. The lines represtent the values used in each year for each of the simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/Historic Exploitation/proportional_change_in_pool_space.png"))
+```
+
+<!-- Top Down low exploit sims -->
+
+```{r  echo=F}
+#| label: fig-td-low-real-pool
+#| fig.cap: "Realized pool space (tonnes) for each stock in the *TD-Low* simulations. The black line on the left represents the historic biomass of the stock. The lines on the right of the figure are the realized pool spaces for the simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/High_TL_exploit_0.5_of_historic/realized_pool_size.png"))
+```
+
+```{r  echo=F}
+#| label: fig-td-low-prop-pool-space
+#| fig.cap: "Proportional change in pool space from the original simulated values for the *TD-Low* simulations. The lines represtent the values used in each year for each of the simulations"
+knitr::include_graphics(paste0(repo,"Figures/TD/High_TL_exploit_0.5_of_historic/proportional_change_in_pool_space.png"))
+```

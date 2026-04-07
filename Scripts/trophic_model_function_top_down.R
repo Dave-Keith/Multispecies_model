@@ -195,7 +195,7 @@ tl.4.5.prop.cor <- ccf(bm.best$prop.bm.tl[bm.best$troph.cat =="Medium"][1:n.year
 # spaces between the biomass and the Pool sizes that we didn't get when using the mean
 max.com.bm <- max(com.tot.bm.best$bm.eco,na.rm=T) 
 #start.com.sim <- com.tot.bm.best$bm.eco[length(com.tot.bm.best$bm.eco)]
-sd.com.bm <- sd(com.tot.bm.best$bm.eco)
+sd.com.bm <- sd(com.tot.bm.best$bm.eco)/sqrt(length(com.tot.bm.best$bm.eco))
 # trophic level biomass and proportions... for the proportion will probably wanna sample from a beta distro
 # So not sure how to do that nicely...
 # 
@@ -289,12 +289,12 @@ start.tl.3.to.4.diff <- start.tl.3.to.4.logit - mn.tl.3.to.4.logit
 start.tl.4.to.5.diff <- start.tl.4.to.5.logit - mn.tl.4.to.5.logit
 
 # the standard deviations
-sd.tl.3.logit <- sd(tl.3.logit)
-sd.tl.4.5.logit <- sd(tl.4.5.logit)
+sd.tl.3.logit <- sd(tl.3.logit)/sqrt(length(tl.3.logit))
+sd.tl.4.5.logit <- sd(tl.4.5.logit)/sqrt(length(tl.4.5.logit))
 #NEW
-sd.tl.5.logit <- sd(tl.5.logit)
-sd.tl.3.to.4.logit <- sd(tl.3.to.4.logit)
-sd.tl.4.to.5.logit <- sd(tl.4.to.5.logit)
+sd.tl.5.logit <- sd(tl.5.logit)/sqrt(length(tl.5.logit))
+sd.tl.3.to.4.logit <- sd(tl.3.to.4.logit)/sqrt(length(tl.3.to.4.logit))
+sd.tl.4.to.5.logit <- sd(tl.4.to.5.logit)/sqrt(length(tl.4.to.5.logit))
 
 # Lag for the Arima model
 tl.4.5.prop.bm.lag.1 <- tl.4.5.prop.4.5.bm$acf[1]
@@ -423,7 +423,7 @@ for(i in 1:n.sims)
         # some of the below unnecessaril complicated.
         #mn.bm.logit <- start.bm.logit
         # And the standard deviation
-        sd.bm.logit <- sd(bm.logit)
+        sd.bm.logit <- sd(bm.logit)/sqrt(length(bm.logit))
         diff.bm.logit <- start.bm.logit - mn.bm.logit
         
         # Then backtransform and everything will stay positive! Just using the AR1 term for these
@@ -737,7 +737,7 @@ for(j in 1:n.sims)
         base.tl.pool.tmp <- sim.troph.pool |> collapse::fsubset(sim == j & Years ==t & troph.cat == tl)
         
         base.stock.pool.tmp$tl.pool <- tl.pool
-        base.stock.pool.tmp$bm.stock <- base.stock.pool.tmp$tl.pool * base.stock.pool.tmp$cor.prop.bm
+        #base.stock.pool.tmp$bm.stock <- base.stock.pool.tmp$tl.pool * base.stock.pool.tmp$cor.prop.bm
         
         base.tl.pool.tmp$prop.pool.space <- base.tl.pool.tmp$bm.tl/tl.bm.last$bm.tl
         # We can then adjust the stock K's by the available K space in each stock
@@ -760,7 +760,8 @@ for(j in 1:n.sims)
         # Now get the stock right, all we have to do is multiply the bm.stock
         # by the prop.pool.space (i.e. what the proportinonal chance in the avilable K-space is)
        # browser()
-        base.stock.pool.tmp$tl.pool <- tl.pool
+        base.stock.pool.tmp$tl.pool <- base.tl.pool.tmp$bm.tl 
+        #base.stock.pool.tmp$tl.pool <- tl.pool
         base.stock.pool.tmp$pool.space <- NA
         base.stock.pool.tmp$adj.pool <- base.tl.pool.tmp$prop.pool.space * base.stock.pool.tmp$bm.stock
         base.stock.pool.tmp$pool.space <- base.stock.pool.tmp$adj.pool - base.stock.pool.tmp$bm.stock

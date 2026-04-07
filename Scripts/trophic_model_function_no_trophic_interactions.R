@@ -192,9 +192,9 @@ tl.4.5.prop.cor <- ccf(bm.best$prop.bm.tl[bm.best$troph.cat =="Medium"][1:n.year
 # So now really what I need to do first is make a quick simulation that gets me ecosystem K, trophic level K, and stock K
 # once I have those then we just run the models :-)
 #mn.com.bm <- mean(com.tot.bm.best$bm.eco)
-max.com.bm <- max(com.tot.bm.best$bm.eco,na.rm=T)
+max.com.bm <- mean(com.tot.bm.best$bm.eco,na.rm=T)
 #start.com.sim <- com.tot.bm.best$bm.eco[length(com.tot.bm.best$bm.eco)]
-sd.com.bm <- sd(com.tot.bm.best$bm.eco)
+sd.com.bm <- sd(com.tot.bm.best$bm.eco)/sqrt(length(com.tot.bm.best$bm.eco))
 # trophic level biomass and proportions... for the proportion will probably wanna sample from a beta distro
 # So not sure how to do that nicely...
 # 
@@ -290,16 +290,16 @@ start.tl.3.to.4.diff <- start.tl.3.to.4.logit - mn.tl.3.to.4.logit
 start.tl.4.to.5.diff <- start.tl.4.to.5.logit - mn.tl.4.to.5.logit
 
 # the standard deviations
-sd.tl.3.logit <- sd(tl.3.logit)
-sd.tl.4.5.logit <- sd(tl.4.5.logit)
+sd.tl.3.logit <- sd(tl.3.logit)/sqrt(length(tl.3.logit))
+sd.tl.4.5.logit <- sd(tl.4.5.logit)/sqrt(length(tl.4.5.logit))
 #NEW
-sd.tl.5.logit <- sd(tl.5.logit)
-sd.tl.3.to.4.logit <- sd(tl.3.to.4.logit)
-sd.tl.4.to.5.logit <- sd(tl.4.to.5.logit)
+sd.tl.5.logit <- sd(tl.5.logit)/sqrt(length(tl.5.logit))
+sd.tl.3.to.4.logit <- sd(tl.3.to.4.logit)/sqrt(length(tl.3.to.4.logit))
+sd.tl.4.to.5.logit <- sd(tl.4.to.5.logit)/sqrt(length(tl.4.to.5.logit))
 
 # Lag for the Arima model
 tl.4.5.prop.bm.lag.1 <- tl.4.5.prop.4.5.bm$acf[1]
-
+#browser()
 sim.pool.stock.lst <- NULL
 sim.pools <- NULL
 sim.com.bm <- NULL
@@ -377,7 +377,7 @@ for(i in 1:n.sims)
         # some of the below unnecessaril complicated.
         #mn.bm.logit <- start.bm.logit
         # And the standard deviation
-        sd.bm.logit <- sd(bm.logit)
+        sd.bm.logit <- sd(bm.logit)/sqrt(length(bm.logit))
         diff.bm.logit <- start.bm.logit - mn.bm.logit
         #browser()
         # Then backtransform and everything will stay positive! Just using the AR1 term for these

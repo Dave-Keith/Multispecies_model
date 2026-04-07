@@ -195,7 +195,7 @@ tl.4.5.prop.cor <- ccf(bm.best$prop.bm.tl[bm.best$troph.cat =="Medium"][1:n.year
 # spaces between the biomass and the Pool sizes that we didn't get when using the mean
 max.com.bm <- max(com.tot.bm.best$bm.eco,na.rm=T) 
 #start.com.sim <- com.tot.bm.best$bm.eco[length(com.tot.bm.best$bm.eco)]
-sd.com.bm <- sd(com.tot.bm.best$bm.eco)
+sd.com.bm <- sd(com.tot.bm.best$bm.eco)/sqrt(length(com.tot.bm.best$bm.eco))
 # trophic level biomass and proportions... for the proportion will probably wanna sample from a beta distro
 # So not sure how to do that nicely...
 # 
@@ -262,8 +262,8 @@ start.tl.3.diff <- start.tl.3.logit - mn.tl.3.logit
 start.tl.4.5.diff <- start.tl.4.5.logit - mn.tl.4.5.logit
 
 # the standard deviations
-sd.tl.3.logit <- sd(tl.3.logit)
-sd.tl.4.5.logit <- sd(tl.4.5.logit)
+sd.tl.3.logit <- sd(tl.3.logit)/sqrt(length(tl.3.logit))
+sd.tl.4.5.logit <- sd(tl.4.5.logit)/sqrt(length(tl.4.5.logit))
 # Lag for the Arima model
 tl.4.5.prop.bm.lag.1 <- tl.4.5.prop.4.5.bm$acf[1]
 # convert to logit scale for the arima models
@@ -324,9 +324,11 @@ for(i in 1:n.sims)
     tl.stocks <- unique(bm.best$Stock[bm.best$troph.cat==tl])
     n.stock.tl <- length(tl.stocks)
     count =0
+   # browser()
     for(s in tl.stocks)
     {
       
+
         tmp.dat <- bm.best[bm.best$Stock ==s,]
         tmp.cor <- pacf(tmp.dat$prop.bm.tl,plot=F) # Get the correlation, use AR1 and no more.
         tmp.cor.lag.1 <- tmp.cor$acf[1]
@@ -342,7 +344,7 @@ for(i in 1:n.sims)
         # some of the below unnecessarily complicated.
         #mn.bm.logit <- start.bm.logit
         # And the standard deviation
-        sd.bm.logit <- sd(bm.logit)
+        sd.bm.logit <- sd(bm.logit)/sqrt(length(bm.logit))
         diff.bm.logit <- start.bm.logit - mn.bm.logit
         
         # Then backtransform and everything will stay positive! Just using the AR1 term for these
@@ -966,10 +968,10 @@ save_plot(paste0(repo.loc,"/Figures/BU/Quantile_er_by_stock.png"),p.sims.er.by.s
 
 
 # Clean up the names of the biomass pools to distinguish them from the actual biomasses
-names(Pool.real) <- c("Years","sim","Stock","troph.cat","prop.tl.pool", "cor.prop.tl.pool", "pool.init.stock", "trophic","Species","color",   
-                   "spec.tl", "Stock.short","common","tl.pool","pool.space","pool.real","mn.wgt", "pool.real.num")
-names(sim.pool.stocks) <- c("Years","sim","Stock","troph.cat","prop.tl.pool", "cor.prop.tl.pool", "pool.init.stock", "trophic","Species","color",   
-                         "spec.tl", "Stock.short","common")
+#names(Pool.real) <- c("Years","sim","Stock","troph.cat","prop.tl.pool", "pool.init.stock", "trophic","Species","color",   
+#                   "spec.tl", "Stock.short","common","tl.pool","pool.space","pool.real","mn.wgt", "pool.real.num")
+#names(sim.pool.stocks) <- c("Years","sim","Stock","troph.cat","prop.tl.pool", "pool.init.stock", "trophic","Species","color",   
+#                         "spec.tl", "Stock.short","common")
 names(sim.troph.pool) <- c("Years","sim","pool.tl","troph.cat","pool.com","prop.com.pool")
 names(sim.com.pool) <- c("com.pool","Years","sim")
 
