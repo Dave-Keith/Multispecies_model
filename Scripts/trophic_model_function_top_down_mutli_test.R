@@ -779,11 +779,9 @@ for(j in 1:n.sims)
           #res.ts[[s]]$bm <- bm.start
         }else{ bm.start <- results[[s]]$bm[results[[s]]$Years == t-1]}
         
+        # The low vs high cut off for the models
         l.v.h <- 0.4
-        #if(s == "ICES HAWG_NS 4,3a,7d_Clupea_harengus")  l.v.h <- 0.6 # DK Note, using 0.6 for herring stock didn't decline below 50% in this time period.
-        #if(s == "ICES WGNSSK_NS 4_Scopthalmus_maximus")  l.v.h <- 0.9 # # DK Note, using 0.9 for this stock because it only declined to 66% of max in time period.
-        #if(s == "ICES-HAWG_NS_Ammodytes_tobianus")  l.v.h <- 0.6 # DK Note, trying to make dynamics more realistic
-        
+
         cur.pool <- base.stock.pool.tmp$adj.pool[base.stock.pool.tmp$Stock ==s]
         init.pool <- base.stock.pool.tmp$bm.stock[base.stock.pool.tmp$Stock ==s]
         
