@@ -20,6 +20,8 @@ library(tidyverse)
 library(ggplot2)
 library(cowplot)
 library(collapse)
+library(flextable)
+library(officer)
 n.yrs.proj <- 50 # How many years into the future we are going to project the stocks
 n.sims <- 20 # The numbers of simulations to run, keeping low for testing...
 
@@ -257,18 +259,6 @@ manage.strat <- read_xlsx(paste0(repo.loc,"/Data/management_strategy.xlsx"),shee
 #manage.strat$use.hcr <- T
 
 
-#manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 3
-#manage.strat$relative.er[manage.strat$troph.cat == "≤ 4.0"] <- 0.5
-#manage.strat$relative.er[manage.strat$troph.cat == "≥ 5.0"] <- 0.5
-
-#manage.strat$er <- 0
-#manage.strat$rp.fun <- "min"
-# here are the models we have
-
-#source(paste0(repo.loc,"/Scripts/trophic_model_function.R"))
-
-
-
 
 
 source(paste0(repo.loc,"/Scripts/Population_dynamics_function.R"))
@@ -293,6 +283,22 @@ source(paste0(repo.loc,"/Scripts/trophic_model_function_top_down_mutli_test.R"))
 #"bp_log_normal"
 #"log_linear
 #"bp_resample"
+
+
+# A summary table of the stocks....
+t1 <- bm.best |> dplyr::group_by(Stock,Species,trophic,troph.cat) |>
+                                                 dplyr::summarise(mn.lam = mean(lam.no.fish.ltr,na.rm=T),
+                                                                  sd.lam = sd(lam.no.fish.ltr,na.rm=T))
+# Reorder it, make it a nice format for word, and save it...                                                                  
+table.1 <- t1[order(t1$trophic),]
+ft <- flextable(table.1)
+
+doc <- read_docx()
+doc <- body_add_flextable(doc, ft)
+print(doc, target = paste0(repo.loc,"/data/Table1.docx"))
+
+
+# Now run the model...
 result <- trophic.mod(dat = bm.best,
                                   n.yrs.proj = 50,
                                   n.sims = 500,
@@ -300,6 +306,7 @@ result <- trophic.mod(dat = bm.best,
                                   repo.loc = repo.loc,
                                   method = 'bp_log_normal',
                                   mod.pred = lm.pred.list)
+
 
 
 tst <- bm.best[bm.best$Stock=="ICES HAWG_NS 4,3a,7d_Clupea_harengus",c("bm.stock","lam.no.fish","lam.fish","Year","catch","er")]

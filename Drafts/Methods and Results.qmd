@@ -2,6 +2,8 @@
 title: "MSM on NS analysis"
 format: docx
 editor: visual
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r preamble}
@@ -163,13 +165,24 @@ tl.high.td.hist <-troph.summary[troph.summary$level == "High Top Down Historic E
 tl.high.td.red <-troph.summary[troph.summary$level == "High Top Down Reduce Exploitation on High",]
 
 # Bottom up effects
-tl.low.bu.rem.pc <- round(100*(tl.low.bu.red$rem - tl.low.bu.hist$rem) /  tl.low.bu.hist$rem,digits =0)
-tl.med.bu.rem.pc <- round(100*(tl.med.bu.red$rem - tl.med.bu.hist$rem) /  tl.med.bu.hist$rem,digits =0)
-tl.high.bu.rem.pc <- round(100*(tl.high.bu.red$rem - tl.high.bu.hist$rem) /  tl.high.bu.hist$rem,digits =0)
+tl.low.bu.rem.pc <- round(100*(tl.low.bu.red$rem - tl.low.bu.hist$rem) /  tl.low.bu.hist$rem,digits =1)
+tl.med.bu.rem.pc <- round(100*(tl.med.bu.red$rem - tl.med.bu.hist$rem) /  tl.med.bu.hist$rem,digits =1)
+tl.high.bu.rem.pc <- round(100*(tl.high.bu.red$rem - tl.high.bu.hist$rem) /  tl.high.bu.hist$rem,digits =1)
+# biomass
+tl.low.bu.bm.pc <- round(100*(tl.low.bu.red$bm - tl.low.bu.hist$bm) /  tl.low.bu.hist$bm,digits =1)
+tl.med.bu.bm.pc <- round(100*(tl.med.bu.red$bm - tl.med.bu.hist$bm) /  tl.med.bu.hist$bm,digits =1)
+tl.high.bu.bm.pc <- round(100*(tl.high.bu.red$bm - tl.high.bu.hist$bm) /  tl.high.bu.hist$bm,digits =1)
+
+
 # Top down effects
 tl.low.td.rem.pc <- round(100*(tl.low.td.red$rem - tl.low.td.hist$rem) /  tl.low.td.hist$rem,digits =0)
 tl.med.td.rem.pc <- round(100*(tl.med.td.red$rem - tl.med.td.hist$rem) /  tl.med.td.hist$rem,digits =0)
 tl.high.td.rem.pc <- round(100*(tl.high.td.red$rem - tl.high.td.hist$rem) /  tl.high.td.hist$rem,digits =0)
+# biomass
+tl.low.td.bm.pc <- round(100*(tl.low.td.red$bm - tl.low.td.hist$bm) /  tl.low.td.hist$bm,digits =1)
+tl.med.td.bm.pc <- round(100*(tl.med.td.red$bm - tl.med.td.hist$bm) /  tl.med.td.hist$bm,digits =1)
+tl.high.td.bm.pc <- round(100*(tl.high.td.red$bm - tl.high.td.hist$bm) /  tl.high.td.hist$bm,digits =1)
+
 # comparing scenarios
 ts.tmp <- ts.all
 ts.tmp$scenario[ts.tmp$scenario != "Historic Exploitation"] <- "Reduced Exploitation"
